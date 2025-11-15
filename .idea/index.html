@@ -10,7 +10,7 @@
     <header>
         <h1>GradeDash</h1>
         <p class="subtitle">
-            Run the halls, dodge obstacles, and power up by answering questions.
+            Run the halls, dodge TikToks, and power up by answering questions.
         </p>
     </header>
 
@@ -21,12 +21,64 @@
             <input id="player-name-input" type="text" placeholder="e.g., Anna" />
         </label>
 
-        <label class="field">
-            <span>(Optional) Paste your notes / study content</span>
-            <textarea
-                    id="notes-input"
-                    placeholder="For now the game uses sample questions. Later, this can become your AI-powered custom question bank."></textarea>
-        </label>
+        <div class="mode-toggle">
+            <label>
+                <input type="radio" name="mode" id="mode-existing" checked />
+                Use existing set
+            </label>
+            <label>
+                <input type="radio" name="mode" id="mode-notes" />
+                Generate from my notes (Claude)
+            </label>
+        </div>
+
+        <!-- Existing sets mode -->
+        <div id="existing-mode-panel">
+            <label class="field">
+                <span>Search shared sets</span>
+                <input
+                        id="set-search-input"
+                        type="text"
+                        placeholder="e.g. linear algebra prelim 2"
+                />
+            </label>
+            <div id="set-results"></div>
+            <small>Click a set to select it, then Start Game.</small>
+        </div>
+
+        <!-- Notes → Claude mode -->
+        <div id="notes-mode-panel" class="hidden">
+            <label class="field">
+                <span>Paste your notes / syllabus / topics</span>
+                <textarea
+                        id="notes-input"
+                        placeholder="Paste notes, syllabus, lecture text, etc."
+                ></textarea>
+            </label>
+
+            <label class="field">
+                <span>How many questions?</span>
+                <input
+                        id="notes-question-count"
+                        type="number"
+                        min="4"
+                        max="40"
+                        value="12"
+                />
+            </label>
+
+            <label class="field">
+                <span>(Optional) How should Claude ask?</span>
+                <textarea
+                        id="notes-style-input"
+                        placeholder="e.g. Focus on conceptual traps, multiple-choice, similar to Cornell prelims."
+                ></textarea>
+            </label>
+            <small>
+                We'll send this plus your notes to Claude to generate the best questions
+                for what you're trying to learn.
+            </small>
+        </div>
 
         <button id="start-btn">Start Game</button>
     </section>
@@ -42,12 +94,11 @@
         <div class="hud-item">Player: <span id="player-name-label"></span></div>
     </section>
 
-    <!-- Question bar (shown during questions) -->
+    <!-- Question bar (only question text; answers are in-lane blocks) -->
     <div id="question-overlay" class="question-hidden">
         <div id="question-box">
             <h2>Pop Quiz! ✏️</h2>
             <p id="question-text"></p>
-            <div id="answers-container"></div>
             <p id="explanation-text"></p>
         </div>
     </div>
@@ -77,27 +128,13 @@
 <!-- Game canvas -->
 <canvas id="game-canvas" width="800" height="400"></canvas>
 
-
-<!-- Question overlay -->
-<div id="question-overlay" class="overlay overlay-hidden">
-   <div id="question-box" class="overlay-box">
-       <h2>Pop Quiz! ✏️</h2>
-       <p id="question-text"></p>
-       <div id="answers-container"></div>
-       <p id="explanation-text"></p>
-       <button id="continue-btn" class="hidden">Continue Running</button>
-   </div>
-</div>
-
-
 <!-- Game over overlay -->
 <div id="gameover-overlay" class="overlay overlay-hidden">
-   <div id="gameover-box" class="overlay-box">
-       <h2>Game Over</h2>
-       <p id="gameover-feedback"></p>
-       <p>Your score: <span id="final-score">0</span></p>
-       <p>Best streak: <span id="final-streak">0</span></p>
-
+    <div id="gameover-box" class="overlay-box">
+        <h2>Game Over</h2>
+        <p id="gameover-feedback"></p>
+        <p>Your score: <span id="final-score">0</span></p>
+        <p>Best streak: <span id="final-streak">0</span></p>
 
         <h3>Submit to Leaderboard</h3>
         <p id="gameover-name-display"></p>

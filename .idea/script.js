@@ -1,71 +1,110 @@
 // ============================
-// GRADEDASH – 4-LANE GAME LOOP
+// CONFIG
+// ============================
+
+const BACKEND_URL = "http://localhost:3000"; // change if you deploy
+
+// ============================
+// DOM ELEMENTS
 // ============================
 
 // Canvas & context
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 
-// UI elements
+// Setup UI
 const setupScreen = document.getElementById("setup-screen");
 const startBtn = document.getElementById("start-btn");
-const notesInput = document.getElementById("notes-input");
 const playerNameInput = document.getElementById("player-name-input");
-const playerNameLabel = document.getElementById("player-name-label");
 
+const modeExistingRadio = document.getElementById("mode-existing");
+const modeNotesRadio = document.getElementById("mode-notes");
+
+const existingModePanel = document.getElementById("existing-mode-panel");
+const notesModePanel = document.getElementById("notes-mode-panel");
+
+const setSearchInput = document.getElementById("set-search-input");
+const setResults = document.getElementById("set-results");
+
+const notesInput = document.getElementById("notes-input");
+const notesQuestionCountInput = document.getElementById(
+    "notes-question-count"
+);
+const notesStyleInput = document.getElementById("notes-style-input");
+
+// HUD
 const hud = document.getElementById("hud");
 const scoreText = document.getElementById("score-text");
 const streakText = document.getElementById("streak-text");
 const streakFire = document.getElementById("streak-fire");
+const playerNameLabel = document.getElementById("player-name-label");
 
+// Question bar
 const questionOverlay = document.getElementById("question-overlay");
 const questionTextEl = document.getElementById("question-text");
-const answersContainer = document.getElementById("answers-container");
 const explanationTextEl = document.getElementById("explanation-text");
 const questionBoxEl = document.getElementById("question-box");
 
+// Game over
 const gameoverOverlay = document.getElementById("gameover-overlay");
 const finalScoreEl = document.getElementById("final-score");
 const finalStreakEl = document.getElementById("final-streak");
-const gameoverNameDisplay = document.getElementById("gameover-name-display");
+const gameoverNameDisplay = document.getElementById(
+    "gameover-name-display"
+);
+const gameoverFeedback = document.getElementById("gameover-feedback");
 const restartBtn = document.getElementById("restart-btn");
 const backMenuBtn = document.getElementById("back-menu-btn");
 const submitScoreBtn = document.getElementById("submit-score-btn");
-const gameoverFeedback = document.getElementById("gameover-feedback");
 
-// leaderboard section so we can hide it while playing
+// Leaderboard
 const leaderboardSection = document.getElementById("leaderboard-section");
 const leaderboardBody = document.getElementById("leaderboard-body");
 
-// -------- Game constants --------
+// ============================
+// GAME CONSTANTS
+// ============================
+
 const NUM_LANES = 4;
-const laneY = [90, 170, 250, 330]; // vertical centers for 4 lanes
+const laneY = [90, 170, 250, 330]; // vertical centers for lanes
 const PLAYER_X = 140;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 46;
 
-const QUESTION_INTERVAL = 6000;      // ms between questions
+const QUESTION_INTERVAL = 6000; // ms between questions
 const OBSTACLE_SPAWN_INTERVAL = 1500;
 const BASE_SPEED_CONST = 5;
 
-// -------- Game state --------
+// Fun "distraction" obstacles
+const OBSTACLE_TYPES = [
+    { kind: "tiktok", color: "#ff0050", label: "TikTok" },
+    { kind: "phone", color: "#2196f3", label: "Phone" },
+    { kind: "sleep", color: "#9c27b0", label: "Zzz" },
+    { kind: "snack", color: "#ff9800", label: "Snack" },
+    { kind: "drama", color: "#f44336", label: "Tea" }
+];
+
+// ============================
+// GAME STATE
+// ============================
+
 let gameState = "menu"; // "menu" | "playing" | "gameover";
 
 let playerName = "";
 let player;
 
-let obstacles = [];      // red blockers
-let questionBlocks = []; // moving answer blocks
+let obstacles = []; // distractions
+let questionBlocks = []; // answer blocks in lanes
 
-let questionPrepare = false;  // paused to read question
-let questionActive = false;   // answer blocks currently moving
+let questionPrepare = false; // paused to read question
+let questionActive = false; // answer blocks currently moving
 let activeQuestion = null;
 
 let score = 0;
 let streak = 0;
 let bestStreak = 0;
 let baseSpeed = BASE_SPEED_CONST; // difficulty baseline
-let speed = BASE_SPEED_CONST;     // current movement speed
+let speed = BASE_SPEED_CONST; // current movement speed
 
 let lastSpawnTime = 0;
 let lastQuestionTime = 0;
@@ -74,13 +113,15 @@ let lastFrameTime = performance.now();
 let feedbackMessage = "";
 let feedbackTimer = 0; // ms remaining
 
-// Questions
+// Question data
 let questionBank = [];
 let questionIndex = 0;
-let questionNumber = 1; // you can change/remove this if you don't want a limit
+
+// for existing sets mode
+let selectedSetId = null;
 
 // ============================
-// SAMPLE QUESTIONS
+// SAMPLE QUESTIONS (fallback)
 // ============================
 function loadSampleQuestions() {
     questionBank = [
@@ -120,6 +161,103 @@ function loadSampleQuestions() {
             explanation: "5 squared is 5 × 5 = 25."
         }
     ];
+}
+
+// ============================
+// BACKEND INTEGRATION
+// ============================
+
+async function loadQuestionsFromExistingSet(setId) {
+    const res = await fetch(`${BACKEND_URL}/api/sets/${setId}`);
+    if (!res.ok) {
+        alert("Failed to load study set. Using sample questions instead.");
+        loadSampleQuestions();
+        questionIndex = 0;
+        return;
+    }
+    const data = await res.json();
+    questionBank = data.questions || [];
+    if (!questionBank.length) {
+        loadSampleQuestions();
+    }
+    questionIndex = 0;
+}
+
+async function generateQuestionsFromNotes(notesText, count, stylePrompt) {
+    const defaultStyle =
+        `Based on this text, generate ${count} multiple-choice questions ` +
+        `with 4 options each, focusing on conceptual understanding, common exam traps, ` +
+        `and a short explanation for each answer.`;
+
+    const fullPrompt =
+        stylePrompt && stylePrompt.trim().length > 0
+            ? stylePrompt
+            : defaultStyle;
+
+    const res = await fetch(`${BACKEND_URL}/api/generate-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            notes: notesText,
+            instructions: fullPrompt,
+            numQuestions: count
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("Generation error:", err);
+        alert("Could not generate questions. Using sample questions instead.");
+        loadSampleQuestions();
+        questionIndex = 0;
+        return;
+    }
+
+    const data = await res.json();
+    questionBank = Array.isArray(data) ? data : [];
+    if (!questionBank.length) {
+        loadSampleQuestions();
+    }
+    questionIndex = 0;
+}
+
+async function fetchSetResults() {
+    const q = setSearchInput.value.trim();
+    const res = await fetch(
+        `${BACKEND_URL}/api/sets?query=${encodeURIComponent(q)}`
+    );
+    const sets = await res.json();
+
+    setResults.innerHTML = "";
+    selectedSetId = null;
+
+    sets.forEach((s) => {
+        const div = document.createElement("div");
+        div.className = "set-result";
+        div.dataset.setId = s.id;
+        div.innerHTML = `
+      <div class="set-title">${s.title}</div>
+      <div class="set-meta">${s.questionCount} questions · ${s.meta}</div>
+    `;
+        div.addEventListener("click", () => {
+            // clear previous selection
+            document
+                .querySelectorAll(".set-result.selected")
+                .forEach((el) => el.classList.remove("selected"));
+            div.classList.add("selected");
+            selectedSetId = s.id;
+        });
+        setResults.appendChild(div);
+    });
+}
+
+// simple debounce
+function debounce(fn, delay) {
+    let id;
+    return function (...args) {
+        clearTimeout(id);
+        id = setTimeout(() => fn.apply(this, args), delay);
+    };
 }
 
 // ============================
@@ -261,7 +399,7 @@ function update(dt) {
     // Collisions with normal obstacles → game over
     for (const obs of obstacles) {
         if (rectIntersect(player, obs)) {
-            triggerGameOver();
+            triggerGameOver("You ran into a distraction.");
             return;
         }
     }
@@ -322,21 +460,31 @@ function draw() {
         ctx.fillText("A+", player.x + player.width / 2 - 10, player.y - 10);
     }
 
-    // Obstacles
-    ctx.fillStyle = "#e53935";
+    // Obstacles (fun distractions)
     for (const obs of obstacles) {
+        ctx.fillStyle = obs.color || "#e53935";
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "12px system-ui";
+        ctx.textBaseline = "middle";
+        const label = obs.label || "";
+        const metrics = ctx.measureText(label);
+        const textX = obs.x + (obs.width - metrics.width) / 2;
+        const textY = obs.y + obs.height / 2;
+        ctx.fillText(label, textX, textY);
     }
 
-    // Moving answer blocks in lanes — full answer text “in line” with the game
+    // Moving answer blocks in lanes (with inline text)
     ctx.textBaseline = "top";
     for (const qb of questionBlocks) {
         ctx.fillStyle = "#3949ab";
         ctx.fillRect(qb.x, qb.y, qb.width, qb.height);
 
         ctx.fillStyle = "#ffffff";
-        ctx.font = "14px system-ui";
-        wrapText(ctx, qb.text, qb.x + 6, qb.y + 6, qb.width - 12, 16);
+        ctx.font = "12px system-ui";
+        const labelText = `${qb.label}. ${qb.text || ""}`;
+        wrapText(ctx, labelText, qb.x + 6, qb.y + 6, qb.width - 12, 14);
     }
 
     // Instructions
@@ -344,13 +492,13 @@ function draw() {
     ctx.font = "16px system-ui";
     if (gameState === "playing") {
         ctx.fillText(
-            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into the block with the correct answer.",
+            "↑ / ↓ to switch lanes. Avoid distractions. Dodge into A/B/C/D blocks to answer.",
             12,
             canvas.height - 18
         );
     } else if (gameState === "menu") {
         ctx.fillText(
-            "Enter your name and click Start Game to begin.",
+            "Fill the setup above and click Start Game.",
             12,
             canvas.height - 18
         );
@@ -393,15 +541,19 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 function spawnObstacle() {
     const lane = Math.floor(Math.random() * NUM_LANES);
     const height = 40;
-    const width = 26;
+    const width = 80;
     const y = laneY[lane] - height / 2;
+    const type =
+        OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
 
     obstacles.push({
         lane,
         x: canvas.width + 40,
         y,
         width,
-        height
+        height,
+        color: type.color,
+        label: type.label
     });
 }
 
@@ -427,31 +579,25 @@ function startQuestionPause() {
     questionActive = false;
     questionBlocks = [];
 
-    // Show question bar (uses reserved space so canvas doesn't move)
+    // Show question bar (it already has reserved space)
     if (questionOverlay) {
         questionOverlay.classList.remove("question-hidden");
     }
 
-    // Small random horizontal shift so it feels dynamic
+    // slight horizontal jitter so it "moves" a bit
     if (questionBoxEl) {
-        const offsets = [-40, -20, 0, 20, 40];
+        const offsets = [-20, -10, 0, 10, 20];
         const dx = offsets[Math.floor(Math.random() * offsets.length)];
         questionBoxEl.style.transform = `translateX(${dx}px)`;
     }
 
-    // Question text only (no answer choices here)
     if (questionTextEl) {
         questionTextEl.textContent = activeQuestion.question;
     }
 
-    // Clear answer container so no choices show in the bar
-    if (answersContainer) {
-        answersContainer.innerHTML = "";
-    }
-
     if (explanationTextEl) {
         explanationTextEl.textContent =
-            "Press Enter when you're ready. Answer choices will appear in the lanes.";
+            "Press Enter when you're ready. Answer choices will appear as A/B/C/D blocks in lanes.";
     }
 }
 
@@ -462,22 +608,28 @@ function spawnAnswerBlocks() {
     questionActive = true;
     questionBlocks = [];
 
-    // Up to 4 options → 4 lanes
+    const options = activeQuestion.options || [];
+    const count = Math.min(4, options.length);
+    if (count === 0) {
+        questionActive = false;
+        return;
+    }
+
     const optionIndices = [];
-    const count = Math.min(4, activeQuestion.options.length);
     for (let i = 0; i < count; i++) {
         optionIndices.push(i);
     }
 
-    // Shuffle lanes [0,1,2,3]
     const laneOrder = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
     const startX = canvas.width + 80;
 
     optionIndices.forEach((optIdx, i) => {
         const lane = laneOrder[i];
-        const width = 160;
-        const height = 64;
+        const width = 200;
+        const height = 60;
         const y = laneY[lane] - height / 2;
+
+        const label = String.fromCharCode(65 + optIdx); // A,B,C,D
 
         questionBlocks.push({
             lane,
@@ -486,13 +638,14 @@ function spawnAnswerBlocks() {
             width,
             height,
             answerIndex: optIdx,
-            text: activeQuestion.options[optIdx]
+            label,
+            text: options[optIdx]
         });
     });
 
     if (explanationTextEl) {
         explanationTextEl.textContent =
-            "Dodge into the lane with the correct answer.";
+            "Dodge into the lane for A, B, C, or D to choose your answer!";
     }
 }
 
@@ -521,7 +674,8 @@ function handleLaneAnswer(block) {
         feedbackTimer = 2000;
 
         if (explanationTextEl) {
-            explanationTextEl.textContent = "Correct! " + activeQuestion.explanation;
+            explanationTextEl.textContent =
+                "Correct! " + (activeQuestion.explanation || "");
         }
     } else {
         streak = 0;
@@ -532,20 +686,16 @@ function handleLaneAnswer(block) {
         feedbackTimer = 2000;
 
         if (explanationTextEl) {
-            explanationTextEl.textContent = "Not quite. " + activeQuestion.explanation;
+            explanationTextEl.textContent =
+                "Not quite. " + (activeQuestion.explanation || "");
         }
-    }
-
-    if (questionIndex >= questionNumber) {
-        gameoverFeedback.textContent = "You've answered all questions.";
-        triggerGameOver();
     }
 }
 
 // ============================
 // GAME OVER
 // ============================
-function triggerGameOver() {
+function triggerGameOver(message) {
     if (gameState === "gameover") return;
     gameState = "gameover";
 
@@ -560,25 +710,22 @@ function triggerGameOver() {
     finalScoreEl.textContent = Math.floor(score);
     finalStreakEl.textContent = bestStreak;
     gameoverNameDisplay.textContent = `Player: ${playerName || "Unknown"}`;
+    if (gameoverFeedback) {
+        gameoverFeedback.textContent = message || "";
+    }
     gameoverOverlay.classList.remove("overlay-hidden");
 
-    // show leaderboard again when not running
-    if (leaderboardSection) {
-        leaderboardSection.classList.remove("hidden");
-    }
+    // show leaderboard again on game over
+    leaderboardSection.classList.remove("hidden");
 }
 
-// buttons
 restartBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");
     resetGameState();
     gameState = "playing";
+    hud.classList.remove("hidden");
+    leaderboardSection.classList.add("hidden");
     lastFrameTime = performance.now();
-
-    // hide leaderboard while we play again
-    if (leaderboardSection) {
-        leaderboardSection.classList.add("hidden");
-    }
 });
 
 backMenuBtn.addEventListener("click", () => {
@@ -586,11 +733,7 @@ backMenuBtn.addEventListener("click", () => {
     hud.classList.add("hidden");
     setupScreen.classList.remove("hidden");
     gameState = "menu";
-
-    // show leaderboard on menu
-    if (leaderboardSection) {
-        leaderboardSection.classList.remove("hidden");
-    }
+    leaderboardSection.classList.remove("hidden");
 });
 
 // ============================
@@ -644,9 +787,26 @@ submitScoreBtn.addEventListener("click", () => {
 });
 
 // ============================
-// START GAME
+// START GAME FLOW
 // ============================
-startBtn.addEventListener("click", () => {
+
+modeExistingRadio.addEventListener("change", () => {
+    if (modeExistingRadio.checked) {
+        existingModePanel.classList.remove("hidden");
+        notesModePanel.classList.add("hidden");
+    }
+});
+
+modeNotesRadio.addEventListener("change", () => {
+    if (modeNotesRadio.checked) {
+        existingModePanel.classList.add("hidden");
+        notesModePanel.classList.remove("hidden");
+    }
+});
+
+setSearchInput.addEventListener("input", debounce(fetchSetResults, 300));
+
+startBtn.addEventListener("click", async () => {
     const nameVal = playerNameInput.value.trim();
     if (!nameVal) {
         alert("Please enter a player name to continue.");
@@ -655,23 +815,53 @@ startBtn.addEventListener("click", () => {
     playerName = nameVal;
     playerNameLabel.textContent = playerName;
 
-    loadSampleQuestions();
+    startBtn.disabled = true;
+    const originalText = startBtn.textContent;
+    startBtn.textContent = "Loading questions...";
+
+    if (modeExistingRadio.checked) {
+        if (!selectedSetId) {
+            alert("Please choose a study set first.");
+            startBtn.disabled = false;
+            startBtn.textContent = originalText;
+            return;
+        }
+        await loadQuestionsFromExistingSet(selectedSetId);
+    } else {
+        const notes = (notesInput.value || "").trim();
+        if (!notes) {
+            alert("Paste some notes or topics first.");
+            startBtn.disabled = false;
+            startBtn.textContent = originalText;
+            return;
+        }
+        const count =
+            parseInt(notesQuestionCountInput.value, 10) || 12;
+        const style = notesStyleInput.value;
+        await generateQuestionsFromNotes(notes, count, style);
+    }
+
+    // fall back if something went wrong
+    if (!questionBank || !questionBank.length) {
+        loadSampleQuestions();
+    }
 
     setupScreen.classList.add("hidden");
     hud.classList.remove("hidden");
+    leaderboardSection.classList.add("hidden");
+
     resetGameState();
     gameState = "playing";
     lastFrameTime = performance.now();
 
-    // hide leaderboard while game is running
-    if (leaderboardSection) {
-        leaderboardSection.classList.add("hidden");
-    }
+    startBtn.disabled = false;
+    startBtn.textContent = originalText;
 });
 
 // ============================
 // INIT
 // ============================
 renderLeaderboard();
+loadSampleQuestions(); // default questions if backend fails / not used
 resetGameState();
 requestAnimationFrame(gameLoop);

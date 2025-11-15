@@ -2,14 +2,14 @@
 
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
     background: #0b0b10;
     color: #f5f5f5;
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-x: hidden;  /* keep from scrolling sideways */
-    overflow-y: auto;    /* allow vertical scrolling */
+    /* allow scrolling again */
 }
 
 #ui {
@@ -90,6 +90,58 @@ button:active {
     box-shadow: none;
 }
 
+/* ----- Mode toggle & set search ----- */
+
+.mode-toggle {
+    margin-top: 8px;
+    display: flex;
+    gap: 16px;
+    font-size: 0.9rem;
+}
+
+.mode-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#set-results {
+    margin-top: 6px;
+    max-height: 160px;
+    overflow-y: auto;
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #252a3c;
+    background: #11141c;
+}
+
+.set-result {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #252a3c;
+}
+
+.set-result:last-child {
+    border-bottom: none;
+}
+
+.set-result:hover {
+    background: #1e2233;
+}
+
+.set-result.selected {
+    background: #2e7d32;
+}
+
+.set-title {
+    font-weight: 600;
+}
+
+.set-meta {
+    font-size: 0.8rem;
+    color: #bbb;
+}
+
 /* ----- HUD ----- */
 
 #hud {
@@ -113,7 +165,7 @@ button:active {
 /* ----- Question bar ABOVE the game ----- */
 
 #question-overlay {
-    width: 800px;          /* match canvas width */
+    width: 800px; /* match canvas width */
     margin-top: 10px;
     margin-bottom: 4px;
 
@@ -147,43 +199,13 @@ button:active {
 
 #question-text {
     font-size: 0.95rem;
-    margin: 4px 0 6px;
+    margin: 4px 0 4px;
 }
 
-/* Container for answer options in the bar */
-#answers-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 4px;
-}
-
-/* Static answer boxes: white background, black text */
-.answer-static {
-    padding: 4px 8px;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #000000;
-    border: 1px solid #cccccc;
-    font-size: 0.85rem;
-}
-
-/* Explanation / hint line under the answers */
 #explanation-text {
-    margin-top: 6px;
+    margin-top: 4px;
     font-size: 0.8rem;
     color: #a5d6a7;
-}
-
-/* These are left here in case you re-introduce clickable answer buttons later */
-.answer-btn.correct {
-    background: #2e7d32;
-    border-color: #66bb6a;
-}
-
-.answer-btn.wrong {
-    background: #c62828;
-    border-color: #ef5350;
 }
 
 /* ----- Canvas ----- */
@@ -227,7 +249,7 @@ button:active {
 /* ----- Overlays (for Game Over, etc.) ----- */
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .overlay {
