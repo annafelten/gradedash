@@ -61,6 +61,7 @@ Additionally, we leveraged Claude to assist us in coding, helping streamline dev
 Frontend: JavaScript, HTML, CSS
 Backend: Node.js
 AI: Claude API (Anthropic)  
+Frameworks and Libraries: express, cors, dotenv, @anthropic-ai/sdk, multer, pdf-parse, fetch, local storage
 
 Installation and SetUp:
 - Clone the git repository
