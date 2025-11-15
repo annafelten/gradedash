@@ -26,6 +26,47 @@ app.use(cors());
 app.use(express.json());
 
 // --------------------------
+// Shared fallback questions
+// --------------------------
+const SAMPLE_QUESTIONS = [
+    {
+        question: "What is 3 × 4?",
+        options: ["7", "9", "12", "24"],
+        correct_index: 2,
+        explanation: "3 multiplied by 4 is 12.",
+    },
+    {
+        question: "Which gas do plants absorb for photosynthesis?",
+        options: ["Oxygen", "Carbon dioxide", "Nitrogen", "Helium"],
+        correct_index: 1,
+        explanation: "Plants use carbon dioxide and release oxygen.",
+    },
+    {
+        question: "In the word 'resilient', what does it mean?",
+        options: [
+            "Able to recover quickly from difficulty",
+            "Very tired",
+            "Always happy",
+            "Afraid of change",
+        ],
+        correct_index: 0,
+        explanation: "Resilient means bouncing back after challenges.",
+    },
+    {
+        question: "What is the capital of France?",
+        options: ["Berlin", "Paris", "Rome", "Madrid"],
+        correct_index: 1,
+        explanation: "Paris is the capital city of France.",
+    },
+    {
+        question: "What is 5²?",
+        options: ["10", "15", "20", "25"],
+        correct_index: 3,
+        explanation: "5 squared is 5 × 5 = 25.",
+    },
+];
+
+// --------------------------
 // In-memory demo study sets
 // --------------------------
 const STUDY_SETS = [
@@ -124,10 +165,12 @@ JSON structure:
 ]
 
 Rules:
-- Each question MUST have 4 answer options.
+- Each question MUST have exactly 4 answer options.
 - Exactly one option is correct.
 - "correct_index" is the 0-based index of the correct option.
 - Explanations should be 1–3 sentences.
+- VERY IMPORTANT: inside any "question" or "explanation" text, do NOT use the double quote character ("). 
+  If you need quotes, use single quotes (') instead.
 `;
 
     const styleInstruction =
@@ -169,6 +212,7 @@ Using only the information and concepts suggested by the text above (plus basic 
     } catch (err) {
         console.error("Failed to parse Claude JSON:", err);
         console.error("Raw content:", text);
+        // Let caller decide how to recover
         throw new Error("Claude did not return valid JSON.");
     }
 
@@ -217,8 +261,7 @@ app.get("/api/sets/:id", (req, res) => {
 });
 
 // -------------------------------------------
-// POST /api/generate-questions
-// body: { notes, instructions?, numQuestions? }
+// POST /api/generate-questions (notes text)
 // -------------------------------------------
 app.post("/api/generate-questions", async (req, res) => {
     try {
@@ -228,25 +271,29 @@ app.post("/api/generate-questions", async (req, res) => {
             return res.status(400).json({ error: "Missing 'notes' text." });
         }
 
-        const questions = await generateQuestionsFromText(
-            notes,
-            instructions,
-            numQuestions
-        );
+        let questions;
+        try {
+            questions = await generateQuestionsFromText(
+                notes,
+                instructions,
+                numQuestions
+            );
+        } catch (err) {
+            console.error("generateQuestionsFromText failed:", err);
+            questions = SAMPLE_QUESTIONS;
+        }
 
         res.json(questions);
     } catch (err) {
         console.error("Error in /api/generate-questions:", err);
-        res
-            .status(500)
-            .json({ error: err.message || "Internal server error." });
+        res.status(500).json({ error: err.message || "Internal server error." });
     }
 });
 
 // -------------------------------------------
 // POST /api/generate-from-pdf
 // multipart/form-data: pdf (file), instructions?, numQuestions?
-// NO pdf-parse. We do a simple Buffer → string fallback.
+// (No pdf-parse; simple Buffer → string strategy)
 // -------------------------------------------
 app.post("/api/generate-from-pdf", upload.single("pdf"), async (req, res) => {
     try {
@@ -260,19 +307,17 @@ app.post("/api/generate-from-pdf", upload.single("pdf"), async (req, res) => {
             `Received PDF: ${req.file.originalname}, size = ${req.file.size} bytes`
         );
 
-        // SUPER SIMPLE "extraction": try to decode raw bytes as text.
-        // This is not perfect PDF parsing but works well enough for a hackathon demo.
+        // Simple "extraction": decode raw bytes as text.
         let text = req.file.buffer.toString("latin1");
 
         if (!text || !text.trim()) {
             text = `
 The user uploaded a PDF called "${req.file.originalname}".
 It is a study document (exam, notes, or slides) for a college course.
-Generate questions on the likely academic content of this PDF, focusing on key concepts, formulas, and common exam traps.
+Generate rigorous academic questions on the likely content of this PDF, focusing on key concepts and common exam traps.
 `;
         }
 
-        // Truncate to keep prompt reasonable
         const MAX_CHARS = 12000;
         if (text.length > MAX_CHARS) {
             text =
@@ -280,18 +325,24 @@ Generate questions on the likely academic content of this PDF, focusing on key c
                 "\n\n[Truncated PDF content for question generation]";
         }
 
-        const questions = await generateQuestionsFromText(
-            text,
-            instructions,
-            numQuestions ? Number(numQuestions) : undefined
-        );
+        let questions;
+        try {
+            questions = await generateQuestionsFromText(
+                text,
+                instructions,
+                numQuestions ? Number(numQuestions) : undefined
+            );
+        } catch (err) {
+            console.error("generateQuestionsFromText failed for PDF:", err);
+            // 🚨 Fallback: never 500, just return sample questions
+            questions = SAMPLE_QUESTIONS;
+        }
 
         res.json(questions);
     } catch (err) {
         console.error("Error in /api/generate-from-pdf:", err);
-        res
-            .status(500)
-            .json({ error: err.message || "Internal server error." });
+        // Even here, try not to break the game: send fallback instead of 500
+        res.json(SAMPLE_QUESTIONS);
     }
 });
 
