@@ -1,3 +1,6 @@
+
+![gradedash](https://github.coecis.cornell.edu/user-attachments/assets/11da56ce-19b7-402c-85f8-28ec494c9003)
+
 # GradeDash
 
 ## Project Overview
