@@ -126,6 +126,7 @@ button:active {
 
 
 #game-canvas {
+   position: relative;
    margin-top: 10px;
    border-radius: 8px;
    border: 2px solid #252a3c;
@@ -183,7 +184,7 @@ button:active {
    display: flex;
    align-items: center;
    justify-content: center;
-   z-index: 10;
+   z-index: 1000;
 }
 
 .overlay-hidden {
