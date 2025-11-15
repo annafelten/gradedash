@@ -79,6 +79,8 @@ let questionBank = [];
 let questionIndex = 0;
 let questionNumber = 1; // you can change/remove this if you don't want a limit
 
+
+
 // ============================
 // SAMPLE QUESTIONS
 // ============================
