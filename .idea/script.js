@@ -3,6 +3,10 @@
 // ============================
 
 const BACKEND_URL = "http://localhost:3000"; // change if you deploy
+// --- REMOVED musicToggle and bgMusic ---
+
+// --- REMOVED character selection ---
+const selectedCharacter = "gold"; // Hard-coded to gold
 
 // ============================
 // DOM ELEMENTS
@@ -80,7 +84,6 @@ const QUESTION_INTERVAL = 6000; // ms between questions
 const OBSTACLE_SPAWN_INTERVAL = 1500;
 const BASE_SPEED_CONST = 5;
 
-// Fun "distraction" obstacles
 // Fun "distraction" obstacles – now as image sprites
 // (paths are relative to index.html; adjust if your structure is different)
 const OBSTACLE_TYPES = [
@@ -92,12 +95,24 @@ const OBSTACLE_TYPES = [
     { kind: "funny2",    src: "../assets/funny2.gif" }
 ];
 
-// Preload images into a cache so we don't recreate Image() every frame
+// --- SIMPLIFIED: Only load the gold sprite ---
+// (Uses the ../assets/ path, which you said worked for obstacles)
+const PLAYER_SPRITE = new Image();
+PLAYER_SPRITE.src = "../assets/runner_gold.png";
+PLAYER_SPRITE.onload = () => {
+    console.log("[PLAYER IMG] Loaded: " + PLAYER_SPRITE.src);
+};
+PLAYER_SPRITE.onerror = () => {
+    console.error("[PLAYER IMG] FAILED to load: " + PLAYER_SPRITE.src);
+};
+// --- END SIMPLIFICATION ---
+
+
 // Preload images into a cache so we don't recreate Image() every frame
 const OBSTACLE_IMAGES = {};
 for (const type of OBSTACLE_TYPES) {
     const img = new Image();
-    img.src = type.src;
+    img.src = type.src; // Uses the path from OBSTACLE_TYPES (../assets/)
 
     img.onload = () => {
         console.log("[OBSTACLE IMG] loaded:", type.src, img.naturalWidth, img.naturalHeight);
@@ -515,11 +530,11 @@ function update(dt) {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Background
+    // -------- Background --------
     ctx.fillStyle = "#14151c";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Lanes
+    // -------- Lanes --------
     for (let i = 0; i < NUM_LANES; i++) {
         ctx.strokeStyle = "#252a3c";
         ctx.lineWidth = 2;
@@ -529,34 +544,37 @@ function draw() {
         ctx.stroke();
     }
 
-    // Player
-    ctx.fillStyle = "#ffc107";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    // -------- Player (sprite based on selectedCharacter) --------
+    // --- SIMPLIFIED: Always use PLAYER_SPRITE (gold) ---
+    if (PLAYER_SPRITE && PLAYER_SPRITE.naturalWidth > 0) {
+        ctx.drawImage(PLAYER_SPRITE, player.x, player.y, player.width, player.height);
+    } else {
+        // Fallback rectangle if image is still loading or failed
+        ctx.fillStyle = "#ffc107"; // Hard-coded gold color
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
 
-    // A+ indicator
+    // A+ indicator above player when streak > 0
     if (streak > 0) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "18px system-ui";
         ctx.fillText("A+", player.x + player.width / 2 - 10, player.y - 10);
     }
 
-    // Obstacles (fun distractions)
-// Obstacles (distractions) – draw images instead of text boxes
-// Obstacles (distractions) – draw images if loaded, else red box
+    // -------- Obstacles (distractions) --------
     for (const obs of obstacles) {
         const img = obs.img;
 
-        // naturalWidth > 0 means the image actually loaded (not 404)
+        // If image actually loaded, draw it; else red fallback box
         if (img && img.naturalWidth > 0) {
             ctx.drawImage(img, obs.x, obs.y, obs.width, obs.height);
         } else {
-            // Fallback: visible red box so you can still play
-            ctx.fillStyle = "#e53935";
+            ctx.fillStyle = "#e53935"; // Fallback color
             ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
         }
     }
 
-    // Answer blocks
+    // -------- Answer blocks (A/B/C/D) --------
     ctx.textBaseline = "top";
     for (const qb of questionBlocks) {
         // Card background
@@ -568,16 +586,15 @@ function draw() {
         ctx.lineWidth = 2;
         ctx.strokeRect(qb.x, qb.y, qb.width, qb.height);
 
-        // Text: big, black, left-aligned
+        // Text
         ctx.fillStyle = "#000000";
         ctx.font = "16px system-ui";
 
-        // e.g. "A) eigenvalue" instead of tiny wall of text
         const labelText = `${qb.label}) ${qb.text || ""}`;
         wrapText(ctx, labelText, qb.x + 10, qb.y + 10, qb.width - 20, 20);
     }
 
-    // Instructions
+    // -------- Instructions at bottom --------
     ctx.fillStyle = "#ffffffaa";
     ctx.font = "16px system-ui";
     if (gameState === "playing") {
@@ -594,7 +611,7 @@ function draw() {
         );
     }
 
-    // Feedback text
+    // -------- Feedback text (Correct / Not quite / Missed, etc.) --------
     if (feedbackTimer > 0 && feedbackMessage) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "16px system-ui";
@@ -914,6 +931,11 @@ startBtn.addEventListener("click", async () => {
     playerName = nameVal;
     playerNameLabel.textContent = playerName;
 
+    // --- REMOVED character selection logic ---
+    // selectedCharacter is already "gold" by default
+
+    // --- REMOVED music toggle logic ---
+
     startBtn.disabled = true;
     const originalText = startBtn.textContent;
     startBtn.textContent = "Loading questions...";
@@ -924,7 +946,7 @@ startBtn.addEventListener("click", async () => {
         const pdfFile = pdfInput.files && pdfInput.files[0];
 
         if (pdfFile) {
-            // ALWAYS prefer PDF if provided
+            // prefer PDF
             await generateQuestionsFromPdf(pdfFile, count, style);
         } else if (modeExistingRadio.checked) {
             if (!selectedSetId) {
@@ -941,7 +963,7 @@ startBtn.addEventListener("click", async () => {
             await generateQuestionsFromNotes(notes, count, style);
         }
 
-        // fall back if something went wrong
+        // fallback
         if (!questionBank || !questionBank.length) {
             loadSampleQuestions();
         }
@@ -961,7 +983,6 @@ startBtn.addEventListener("click", async () => {
         startBtn.textContent = originalText;
     }
 });
-
 
 // ============================
 // INIT

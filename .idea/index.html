@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>GradeDash</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -10,12 +11,16 @@
     <header>
         <h1>GradeDash</h1>
         <p class="subtitle">
-            Run the halls, dodge TikToks, and power up by answering questions.
+            Run the halls, dodge distractions, and power up by answering questions.
+        </p>
+        <p class="subtitle tiny">
+            Build your resilience one streak at a time. 🌱
         </p>
     </header>
 
     <section id="setup-screen">
         <h2>Set up your run</h2>
+
         <label class="field">
             <span>Player name</span>
             <input id="player-name-input" type="text" placeholder="e.g., Anna" />
@@ -52,6 +57,7 @@
                         placeholder="Paste notes, syllabus, lecture text, etc."
                 ></textarea>
             </label>
+
             <div class="field-row">
                 <label class="field">
                     <span>How many questions?</span>
@@ -63,19 +69,22 @@
                             value="12"
                     />
                 </label>
+
                 <label class="field">
                     <span>Upload PDF notes</span>
                     <input type="file" id="pdf-input" accept=".pdf" />
                 </label>
             </div>
+
             <label class="field">
-                <span>(Optional) How should Claude ask?</span>
+                <span>(Optional) How should the AI quiz you?</span>
                 <textarea
                         id="notes-style-input"
-                        placeholder="e.g. Focus on conceptual traps, multiple-choice..."
+                        placeholder="e.g. Focus on conceptual traps, exam-style multiple-choice..."
                 ></textarea>
             </label>
         </div>
+
         <button id="start-btn">Start Game</button>
     </section>
 
@@ -98,7 +107,10 @@
 
 <div id="game-column">
     <section id="hud" class="hidden">
-        <div class="hud-item">Score <span id="score-text">0</span></div>
+        <div class="hud-item">
+            Score
+            <span id="score-text">0</span>
+        </div>
         <div class="hud-item">
             Streak
             <span id="streak-text">0</span>
@@ -120,7 +132,6 @@
 
     <canvas id="game-canvas" width="800" height="400"></canvas>
 </div>
-
 
 <div id="gameover-overlay" class="overlay overlay-hidden">
     <div id="gameover-box" class="overlay-box">
