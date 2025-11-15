@@ -156,7 +156,7 @@ function resetGameState() {
     submitScoreBtn.disabled = false;
     submitScoreBtn.textContent = "Save Score";
 
-    if (questionOverlay) questionOverlay.classList.add("overlay-hidden");
+    if (questionOverlay) questionOverlay.classList.add("question-hidden");
     if (gameoverOverlay) gameoverOverlay.classList.add("overlay-hidden");
 }
 
@@ -432,9 +432,11 @@ function startQuestionPause() {
     questionBlocks = [];
 
     // Show question bar
+    // Show question bar (but it uses reserved space, so no layout shift)
     if (questionOverlay) {
-        questionOverlay.classList.remove("overlay-hidden");
+        questionOverlay.classList.remove("question-hidden");
     }
+
 
     // Slight random horizontal shift so it "moves" each time,
     // but stays within the 800px width and never off-screen.
@@ -560,8 +562,9 @@ function handleLaneAnswer(block) {
 function triggerGameOver() {
     if (gameState === "gameover") return;
     gameState = "gameover";
+
     if (questionOverlay) {
-        questionOverlay.classList.add("overlay-hidden");
+        questionOverlay.classList.add("question-hidden");
     }
 
     questionActive = false;
@@ -573,6 +576,7 @@ function triggerGameOver() {
     gameoverNameDisplay.textContent = `Player: ${playerName || "Unknown"}`;
     gameoverOverlay.classList.remove("overlay-hidden");
 }
+
 
 restartBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");

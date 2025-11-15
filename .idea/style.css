@@ -1,6 +1,5 @@
 /* ----- Base layout ----- */
 
-
 body {
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -9,23 +8,21 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow: hidden;
+    overflow: hidden; /* prevent page scrolling */
 }
-
 
 #ui {
     width: 800px;
     margin-top: 10px;
     text-align: center;
-    position: relative;
 }
 
+/* ----- Header ----- */
 
 header h1 {
     margin: 4px 0;
     font-size: 2rem;
 }
-
 
 .subtitle {
     margin: 0;
@@ -33,11 +30,11 @@ header h1 {
     color: #c4c4c4;
 }
 
-
 .subtitle.tiny {
     font-size: 0.75rem;
 }
 
+/* ----- Inputs & buttons ----- */
 
 .field {
     display: flex;
@@ -46,15 +43,10 @@ header h1 {
     margin: 8px 0;
 }
 
-
 .field span {
     font-size: 0.9rem;
     margin-bottom: 2px;
 }
-
-
-/* ----- Inputs & buttons ----- */
-
 
 input,
 textarea {
@@ -86,22 +78,18 @@ button {
     transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
 }
 
-
 button:hover {
     background: #43a047;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
     transform: translateY(-1px);
 }
 
-
 button:active {
     transform: translateY(0);
     box-shadow: none;
 }
 
-
 /* ----- HUD ----- */
-
 
 #hud {
     margin-top: 8px;
@@ -110,7 +98,6 @@ button:active {
     font-size: 0.95rem;
 }
 
-
 .hud-item {
     padding: 4px 10px;
     background: #151823;
@@ -118,109 +105,29 @@ button:active {
     border: 1px solid #252a3c;
 }
 
-
 #streak-fire {
     margin-left: 4px;
 }
 
-
-/* ----- Canvas ----- */
-
-
-#game-canvas {
-    margin-top: 10px;
-    border-radius: 8px;
-    border: 2px solid #252a3c;
-    background: #14151c;
-}
-
-
-/* ----- Leaderboard ----- */
-
-
-#leaderboard-section {
-    margin-top: 16px;
-    text-align: left;
-}
-
-
-#leaderboard-section h2 {
-    margin: 0 0 4px;
-    font-size: 1.1rem;
-}
-
-
-#leaderboard-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-
-
-#leaderboard-table th,
-#leaderboard-table td {
-    padding: 4px 6px;
-    border-bottom: 1px solid #252a3c;
-    text-align: left;
-}
-
-
-#leaderboard-table tr:nth-child(even) {
-    background: #151823;
-}
-
-
-/* ----- Overlays ----- */
-
-
-.hidden {
-    display: none;
-}
-
-
-.overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-}
-
-.overlay-hidden {
-    display: none;
-}
-
-
-.overlay-box {
-    background: #151823;
-    border-radius: 12px;
-    padding: 20px 22px;
-    max-width: 440px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    text-align: center;
-}
-
-
-#question-box h2,
-#gameover-box h2 {
-    margin: 0 0 8px;
-}
-
-
 /* ----- Question bar ABOVE the game ----- */
 
-/* ----- Question bar pinned over the UI ----- */
-
 #question-overlay {
-    position: absolute;
-    top: 190px;              /* tweak this to sit where you want */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 800px;            /* match canvas width */
-    margin: 0;               /* no margins, we’re positioning it */
-    z-index: 5;
+    width: 800px;          /* match canvas width */
+    margin-top: 10px;
+    margin-bottom: 4px;
+
+    /* always reserve vertical space so the canvas never moves */
+    height: 90px;
+    background: #000000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* hide visually but keep the height (no layout shift) */
+.question-hidden {
+    visibility: hidden;
 }
 
 #question-box {
@@ -229,8 +136,8 @@ button:active {
     padding: 8px 10px 10px;
     border: 1px solid #252a3c;
     text-align: left;
+    width: 100%;
 }
-
 
 #question-box h2 {
     margin: 0 0 4px;
@@ -267,40 +174,101 @@ button:active {
     color: #a5d6a7;
 }
 
-
+/* These are left here in case you re-introduce clickable answer buttons later */
 .answer-btn.correct {
     background: #2e7d32;
     border-color: #66bb6a;
 }
-
 
 .answer-btn.wrong {
     background: #c62828;
     border-color: #ef5350;
 }
 
+/* ----- Canvas ----- */
 
-#explanation-text {
-    margin-top: 8px;
-    font-size: 0.85rem;
-    color: #e0e0e0;
+#game-canvas {
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 2px solid #252a3c;
+    background: #14151c;
 }
 
+/* ----- Leaderboard ----- */
 
-/* Game over */
+#leaderboard-section {
+    margin-top: 16px;
+    text-align: left;
+}
 
+#leaderboard-section h2 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+}
+
+#leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+#leaderboard-table th,
+#leaderboard-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #252a3c;
+    text-align: left;
+}
+
+#leaderboard-table tr:nth-child(even) {
+    background: #151823;
+}
+
+/* ----- Overlays (for Game Over, etc.) ----- */
+
+.hidden {
+    display: none;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* used for full-screen overlay panels, NOT the question bar */
+.overlay-hidden {
+    display: none;
+    visibility: hidden;
+}
+
+.overlay-box {
+    background: #151823;
+    border-radius: 12px;
+    padding: 20px 22px;
+    max-width: 440px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    text-align: center;
+}
+
+#gameover-box h2 {
+    margin: 0 0 8px;
+}
+
+/* Game over details */
 
 #gameover-box h3 {
     margin-top: 12px;
     margin-bottom: 4px;
 }
 
-
 #gameover-name-display {
     font-size: 0.9rem;
     margin-bottom: 10px;
 }
-
 
 .gameover-buttons {
     display: flex;
