@@ -58,6 +58,7 @@ const backMenuBtn = document.getElementById("back-menu-btn");
 const submitScoreBtn = document.getElementById("submit-score-btn");
 
 // Leaderboard
+// Leaderboard elements
 const leaderboardSection = document.getElementById("leaderboard-section");
 const leaderboardBody = document.getElementById("leaderboard-body");
 
@@ -119,6 +120,8 @@ let questionIndex = 0;
 
 // for existing sets mode
 let selectedSetId = null;
+
+
 
 // ============================
 // SAMPLE QUESTIONS (fallback)
@@ -732,6 +735,7 @@ backMenuBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");
     hud.classList.add("hidden");
     setupScreen.classList.remove("hidden");
+    leaderboardSection.classList.remove("hidden");
     gameState = "menu";
     leaderboardSection.classList.remove("hidden");
 });
@@ -854,6 +858,7 @@ startBtn.addEventListener("click", async () => {
     gameState = "playing";
     lastFrameTime = performance.now();
 
+    leaderboardSection.classList.add("hidden");
     startBtn.disabled = false;
     startBtn.textContent = originalText;
 });
