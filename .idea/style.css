@@ -66,12 +66,10 @@ textarea {
    font-size: 0.9rem;
 }
 
-
 textarea {
    height: 80px;
    resize: vertical;
 }
-
 
 button {
    padding: 8px 16px;
@@ -268,9 +266,7 @@ button:active {
    margin-top: 8px;
 }
 
-
 /* Small note text */
-
 
 small {
    font-size: 0.75rem;
