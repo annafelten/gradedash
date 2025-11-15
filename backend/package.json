@@ -2,6 +2,7 @@
   "name": "gradedash-backend",
   "version": "1.0.0",
   "description": "Claude backend for GradeDash question generation",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -12,6 +13,6 @@
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "multer": "^2.0.2",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^1.1.1"
   }
 }

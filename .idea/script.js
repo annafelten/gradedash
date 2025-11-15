@@ -29,6 +29,8 @@ const setResults = document.getElementById("set-results");
 const notesInput = document.getElementById("notes-input");
 const pdfInput = document.getElementById("pdf-input");
 
+const ANSWER_BLOCK_SPEED_MULT = 0.45; // 45% of normal speed so they linger
+
 const notesQuestionCountInput = document.getElementById(
     "notes-question-count"
 );
@@ -442,13 +444,13 @@ function update(dt) {
     if (questionActive) {
         for (let i = questionBlocks.length - 1; i >= 0; i--) {
             const qb = questionBlocks[i];
-            qb.x -= speed;
+            qb.x -= speed * ANSWER_BLOCK_SPEED_MULT; // slower so they stay visible longer
             if (qb.x + qb.width < 0) {
                 questionBlocks.splice(i, 1);
             }
         }
 
-        // If all pass without collision, you missed it
+        // If all pass without collision, you missed the question
         if (questionBlocks.length === 0) {
             questionActive = false;
             lastQuestionTime = now;
@@ -459,6 +461,7 @@ function update(dt) {
             feedbackTimer = 2500;
         }
     }
+
 
     // Collisions with distractions → game over
     for (const obs of obstacles) {
@@ -540,15 +543,25 @@ function draw() {
     }
 
     // Answer blocks
+// Answer blocks (white cards, black text, more readable)
     ctx.textBaseline = "top";
     for (const qb of questionBlocks) {
-        ctx.fillStyle = "#3949ab";
+        // Card background
+        ctx.fillStyle = "#ffffff";
         ctx.fillRect(qb.x, qb.y, qb.width, qb.height);
 
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px system-ui";
-        const labelText = `${qb.label}. ${qb.text || ""}`;
-        wrapText(ctx, labelText, qb.x + 6, qb.y + 6, qb.width - 12, 14);
+        // Card border
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(qb.x, qb.y, qb.width, qb.height);
+
+        // Text: big, black, left-aligned
+        ctx.fillStyle = "#000000";
+        ctx.font = "16px system-ui";
+
+        // e.g. "A) eigenvalue" instead of tiny wall of text
+        const labelText = `${qb.label}) ${qb.text || ""}`;
+        wrapText(ctx, labelText, qb.x + 10, qb.y + 10, qb.width - 20, 20);
     }
 
     // Instructions
@@ -687,8 +700,8 @@ function spawnAnswerBlocks() {
 
     optionIndices.forEach((optIdx, i) => {
         const lane = laneOrder[i];
-        const width = 200;
-        const height = 60;
+        const width = 260;   // wider cards
+        const height = 80;   // taller so text isn’t cramped
         const y = laneY[lane] - height / 2;
 
         const label = String.fromCharCode(65 + optIdx); // A,B,C,D
