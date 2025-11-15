@@ -1,0 +1,278 @@
+/* ----- Base layout ----- */
+
+
+body {
+   margin: 0;
+   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+   background: #0b0b10;
+   color: #f5f5f5;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+}
+
+
+#ui {
+   width: 800px;
+   margin-top: 10px;
+   text-align: center;
+}
+
+
+header h1 {
+   margin: 4px 0;
+   font-size: 2rem;
+}
+
+
+.subtitle {
+   margin: 0;
+   font-size: 0.9rem;
+   color: #c4c4c4;
+}
+
+
+.subtitle.tiny {
+   font-size: 0.75rem;
+}
+
+
+.field {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+   margin: 8px 0;
+}
+
+
+.field span {
+   font-size: 0.9rem;
+   margin-bottom: 2px;
+}
+
+
+/* ----- Inputs & buttons ----- */
+
+
+input,
+textarea {
+   width: 100%;
+   padding: 6px 8px;
+   border-radius: 4px;
+   border: 1px solid #333;
+   background: #11141c;
+   color: #f5f5f5;
+   font-family: inherit;
+   font-size: 0.9rem;
+}
+
+
+textarea {
+   height: 80px;
+   resize: vertical;
+}
+
+
+button {
+   padding: 8px 16px;
+   margin-top: 8px;
+   border: none;
+   border-radius: 999px;
+   background: #4caf50;
+   color: #fff;
+   font-weight: 600;
+   font-size: 0.9rem;
+   cursor: pointer;
+   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
+}
+
+
+button:hover {
+   background: #43a047;
+   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+   transform: translateY(-1px);
+}
+
+
+button:active {
+   transform: translateY(0);
+   box-shadow: none;
+}
+
+
+/* ----- HUD ----- */
+
+
+#hud {
+   margin-top: 8px;
+   display: flex;
+   justify-content: space-between;
+   font-size: 0.95rem;
+}
+
+
+.hud-item {
+   padding: 4px 10px;
+   background: #151823;
+   border-radius: 999px;
+   border: 1px solid #252a3c;
+}
+
+
+#streak-fire {
+   margin-left: 4px;
+}
+
+
+/* ----- Canvas ----- */
+
+
+#game-canvas {
+   margin-top: 10px;
+   border-radius: 8px;
+   border: 2px solid #252a3c;
+   background: #14151c;
+}
+
+
+/* ----- Leaderboard ----- */
+
+
+#leaderboard-section {
+   margin-top: 16px;
+   text-align: left;
+}
+
+
+#leaderboard-section h2 {
+   margin: 0 0 4px;
+   font-size: 1.1rem;
+}
+
+
+#leaderboard-table {
+   width: 100%;
+   border-collapse: collapse;
+   font-size: 0.85rem;
+}
+
+
+#leaderboard-table th,
+#leaderboard-table td {
+   padding: 4px 6px;
+   border-bottom: 1px solid #252a3c;
+   text-align: left;
+}
+
+
+#leaderboard-table tr:nth-child(even) {
+   background: #151823;
+}
+
+
+/* ----- Overlays ----- */
+
+
+.hidden {
+   display: none;
+}
+
+
+.overlay {
+   position: fixed;
+   inset: 0;
+   background: rgba(0, 0, 0, 0.7);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   z-index: 10;
+}
+
+.overlay-hidden {
+    display: none;
+}
+
+
+.overlay-box {
+   background: #151823;
+   border-radius: 12px;
+   padding: 20px 22px;
+   max-width: 440px;
+   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+   text-align: center;
+}
+
+
+#question-box h2,
+#gameover-box h2 {
+   margin: 0 0 8px;
+}
+
+
+#answers-container {
+   margin-top: 8px;
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+}
+
+
+.answer-btn {
+   width: 100%;
+   text-align: left;
+   padding: 6px 10px;
+   border-radius: 6px;
+   background: #22263a;
+   border: 1px solid #333a59;
+}
+
+
+.answer-btn.correct {
+   background: #2e7d32;
+   border-color: #66bb6a;
+}
+
+
+.answer-btn.wrong {
+   background: #c62828;
+   border-color: #ef5350;
+}
+
+
+#explanation-text {
+   margin-top: 8px;
+   font-size: 0.85rem;
+   color: #e0e0e0;
+}
+
+
+/* Game over */
+
+
+#gameover-box h3 {
+   margin-top: 12px;
+   margin-bottom: 4px;
+}
+
+
+#gameover-name-display {
+   font-size: 0.9rem;
+   margin-bottom: 10px;
+}
+
+
+.gameover-buttons {
+   display: flex;
+   justify-content: center;
+   gap: 8px;
+   margin-top: 8px;
+}
+
+
+/* Small note text */
+
+
+small {
+   font-size: 0.75rem;
+   color: #999;
+}
