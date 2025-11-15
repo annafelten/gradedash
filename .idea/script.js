@@ -27,6 +27,8 @@ const setSearchInput = document.getElementById("set-search-input");
 const setResults = document.getElementById("set-results");
 
 const notesInput = document.getElementById("notes-input");
+const pdfInput = document.getElementById("pdf-input");
+
 const notesQuestionCountInput = document.getElementById(
     "notes-question-count"
 );
@@ -58,7 +60,6 @@ const backMenuBtn = document.getElementById("back-menu-btn");
 const submitScoreBtn = document.getElementById("submit-score-btn");
 
 // Leaderboard
-// Leaderboard elements
 const leaderboardSection = document.getElementById("leaderboard-section");
 const leaderboardBody = document.getElementById("leaderboard-body");
 
@@ -118,10 +119,8 @@ let feedbackTimer = 0; // ms remaining
 let questionBank = [];
 let questionIndex = 0;
 
-// for existing sets mode
+// existing sets mode
 let selectedSetId = null;
-
-
 
 // ============================
 // SAMPLE QUESTIONS (fallback)
@@ -171,19 +170,23 @@ function loadSampleQuestions() {
 // ============================
 
 async function loadQuestionsFromExistingSet(setId) {
-    const res = await fetch(`${BACKEND_URL}/api/sets/${setId}`);
-    if (!res.ok) {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/sets/${setId}`);
+        if (!res.ok) {
+            throw new Error("Failed to load study set");
+        }
+        const data = await res.json();
+        questionBank = data.questions || [];
+        if (!questionBank.length) {
+            loadSampleQuestions();
+        }
+        questionIndex = 0;
+    } catch (err) {
+        console.error("Error loading existing set:", err);
         alert("Failed to load study set. Using sample questions instead.");
         loadSampleQuestions();
         questionIndex = 0;
-        return;
     }
-    const data = await res.json();
-    questionBank = data.questions || [];
-    if (!questionBank.length) {
-        loadSampleQuestions();
-    }
-    questionIndex = 0;
 }
 
 async function generateQuestionsFromNotes(notesText, count, stylePrompt) {
@@ -197,61 +200,121 @@ async function generateQuestionsFromNotes(notesText, count, stylePrompt) {
             ? stylePrompt
             : defaultStyle;
 
-    const res = await fetch(`${BACKEND_URL}/api/generate-questions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            notes: notesText,
-            instructions: fullPrompt,
-            numQuestions: count
-        })
-    });
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/generate-questions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                notes: notesText,
+                instructions: fullPrompt,
+                numQuestions: count
+            })
+        });
 
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("Generation error:", err);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error("Generation error:", err);
+            throw new Error("Generation failed");
+        }
+
+        const data = await res.json();
+        questionBank = Array.isArray(data) ? data : [];
+        if (!questionBank.length) {
+            loadSampleQuestions();
+        }
+        questionIndex = 0;
+    } catch (err) {
+        console.error("Error generating from notes:", err);
         alert("Could not generate questions. Using sample questions instead.");
         loadSampleQuestions();
         questionIndex = 0;
-        return;
+    }
+}
+
+async function generateQuestionsFromPdf(pdfFile, count, stylePrompt) {
+    const formData = new FormData();
+    formData.append("pdf", pdfFile);
+
+    if (count) formData.append("numQuestions", String(count));
+    if (stylePrompt && stylePrompt.trim().length > 0) {
+        formData.append("instructions", stylePrompt);
     }
 
-    const data = await res.json();
-    questionBank = Array.isArray(data) ? data : [];
-    if (!questionBank.length) {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/generate-from-pdf`, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error("PDF generation error:", err);
+            throw new Error("PDF generation failed");
+        }
+
+        const data = await res.json();
+        questionBank = Array.isArray(data) ? data : [];
+        if (!questionBank.length) {
+            loadSampleQuestions();
+        }
+        questionIndex = 0;
+    } catch (err) {
+        console.error("Error generating from PDF:", err);
+        alert(
+            "Could not generate questions from the PDF. Using sample questions instead."
+        );
         loadSampleQuestions();
+        questionIndex = 0;
     }
-    questionIndex = 0;
 }
 
 async function fetchSetResults() {
     const q = setSearchInput.value.trim();
-    const res = await fetch(
-        `${BACKEND_URL}/api/sets?query=${encodeURIComponent(q)}`
-    );
-    const sets = await res.json();
-
-    setResults.innerHTML = "";
+    setResults.innerHTML = "<small>Loading sets...</small>";
     selectedSetId = null;
 
-    sets.forEach((s) => {
-        const div = document.createElement("div");
-        div.className = "set-result";
-        div.dataset.setId = s.id;
-        div.innerHTML = `
-      <div class="set-title">${s.title}</div>
-      <div class="set-meta">${s.questionCount} questions · ${s.meta}</div>
-    `;
-        div.addEventListener("click", () => {
-            // clear previous selection
-            document
-                .querySelectorAll(".set-result.selected")
-                .forEach((el) => el.classList.remove("selected"));
-            div.classList.add("selected");
-            selectedSetId = s.id;
+    try {
+        const res = await fetch(
+            `${BACKEND_URL}/api/sets?query=${encodeURIComponent(q)}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch sets");
+        const sets = await res.json();
+
+        setResults.innerHTML = "";
+        if (!sets.length) {
+            setResults.innerHTML =
+                '<small class="error">No sets found. Using demo sets only.</small>';
+            return;
+        }
+
+        sets.forEach((s, idx) => {
+            const div = document.createElement("div");
+            div.className = "set-result";
+            div.dataset.setId = s.id;
+            div.innerHTML = `
+        <div class="set-title">${s.title}</div>
+        <div class="set-meta">${s.questionCount} questions · ${s.meta}</div>
+      `;
+            div.addEventListener("click", () => {
+                document
+                    .querySelectorAll(".set-result.selected")
+                    .forEach((el) => el.classList.remove("selected"));
+                div.classList.add("selected");
+                selectedSetId = s.id;
+            });
+            setResults.appendChild(div);
+
+            // Auto-select first result for convenience
+            if (idx === 0) {
+                div.classList.add("selected");
+                selectedSetId = s.id;
+            }
         });
-        setResults.appendChild(div);
-    });
+    } catch (err) {
+        console.error("Error fetching sets:", err);
+        setResults.innerHTML =
+            '<small class="error">Could not load sets from backend. You can still play with sample questions.</small>';
+    }
 }
 
 // simple debounce
@@ -353,16 +416,16 @@ function update(dt) {
         }
     }
 
-    // If we're in "read the question" pause: world frozen, score frozen
+    // Pause for reading question
     if (questionPrepare) {
         return;
     }
 
-    // Only ramp speed when game is actually running
+    // Only ramp speed when game is running
     baseSpeed += dt * 0.00001;
     speed = baseSpeed;
 
-    // Spawn obstacles if no answers are active
+    // Spawn obstacles
     if (!questionActive && now - lastSpawnTime > OBSTACLE_SPAWN_INTERVAL) {
         spawnObstacle();
         lastSpawnTime = now;
@@ -387,7 +450,7 @@ function update(dt) {
             }
         }
 
-        // If they all pass without collision, you missed the question
+        // If all pass without collision, you missed it
         if (questionBlocks.length === 0) {
             questionActive = false;
             lastQuestionTime = now;
@@ -399,7 +462,7 @@ function update(dt) {
         }
     }
 
-    // Collisions with normal obstacles → game over
+    // Collisions with distractions → game over
     for (const obs of obstacles) {
         if (rectIntersect(player, obs)) {
             triggerGameOver("You ran into a distraction.");
@@ -417,11 +480,11 @@ function update(dt) {
         }
     }
 
-    // Score ticks only when world is moving
+    // Score
     score += dt * 0.02 * (1 + streak * 0.1);
     scoreText.textContent = Math.floor(score);
 
-    // Spawn a new question → pause state (questionPrepare)
+    // Spawn new question
     if (
         !questionActive &&
         !questionPrepare &&
@@ -463,7 +526,7 @@ function draw() {
         ctx.fillText("A+", player.x + player.width / 2 - 10, player.y - 10);
     }
 
-    // Obstacles (fun distractions)
+    // Obstacles
     for (const obs of obstacles) {
         ctx.fillStyle = obs.color || "#e53935";
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -478,7 +541,7 @@ function draw() {
         ctx.fillText(label, textX, textY);
     }
 
-    // Moving answer blocks in lanes (with inline text)
+    // Answer blocks
     ctx.textBaseline = "top";
     for (const qb of questionBlocks) {
         ctx.fillStyle = "#3949ab";
@@ -582,12 +645,10 @@ function startQuestionPause() {
     questionActive = false;
     questionBlocks = [];
 
-    // Show question bar (it already has reserved space)
     if (questionOverlay) {
         questionOverlay.classList.remove("question-hidden");
     }
 
-    // slight horizontal jitter so it "moves" a bit
     if (questionBoxEl) {
         const offsets = [-20, -10, 0, 10, 20];
         const dx = offsets[Math.floor(Math.random() * offsets.length)];
@@ -718,7 +779,6 @@ function triggerGameOver(message) {
     }
     gameoverOverlay.classList.remove("overlay-hidden");
 
-    // show leaderboard again on game over
     leaderboardSection.classList.remove("hidden");
 }
 
@@ -737,7 +797,6 @@ backMenuBtn.addEventListener("click", () => {
     setupScreen.classList.remove("hidden");
     leaderboardSection.classList.remove("hidden");
     gameState = "menu";
-    leaderboardSection.classList.remove("hidden");
 });
 
 // ============================
@@ -823,50 +882,66 @@ startBtn.addEventListener("click", async () => {
     const originalText = startBtn.textContent;
     startBtn.textContent = "Loading questions...";
 
-    if (modeExistingRadio.checked) {
-        if (!selectedSetId) {
-            alert("Please choose a study set first.");
-            startBtn.disabled = false;
-            startBtn.textContent = originalText;
-            return;
+    try {
+        if (modeExistingRadio.checked) {
+            // If nothing explicitly selected but we have a first result, use it
+            if (!selectedSetId) {
+                const first = document.querySelector(".set-result");
+                if (first) {
+                    selectedSetId = first.dataset.setId;
+                    first.classList.add("selected");
+                }
+            }
+            if (!selectedSetId) {
+                alert("Please choose a study set first.");
+                return;
+            }
+            await loadQuestionsFromExistingSet(selectedSetId);
+        } else {
+            const count = parseInt(notesQuestionCountInput.value, 10) || 12;
+            const style = notesStyleInput.value;
+            const pdfFile = pdfInput.files && pdfInput.files[0];
+
+            if (pdfFile) {
+                await generateQuestionsFromPdf(pdfFile, count, style);
+            } else {
+                const notes = (notesInput.value || "").trim();
+                if (!notes) {
+                    alert("Upload a PDF or paste some notes first.");
+                    return;
+                }
+                await generateQuestionsFromNotes(notes, count, style);
+            }
         }
-        await loadQuestionsFromExistingSet(selectedSetId);
-    } else {
-        const notes = (notesInput.value || "").trim();
-        if (!notes) {
-            alert("Paste some notes or topics first.");
-            startBtn.disabled = false;
-            startBtn.textContent = originalText;
-            return;
+
+        if (!questionBank || !questionBank.length) {
+            loadSampleQuestions();
         }
-        const count =
-            parseInt(notesQuestionCountInput.value, 10) || 12;
-        const style = notesStyleInput.value;
-        await generateQuestionsFromNotes(notes, count, style);
+
+        setupScreen.classList.add("hidden");
+        hud.classList.remove("hidden");
+        leaderboardSection.classList.add("hidden");
+
+        resetGameState();
+        gameState = "playing";
+        lastFrameTime = performance.now();
+    } catch (err) {
+        console.error("Error starting game:", err);
+        alert("Something went wrong starting the game. Check the console.");
+    } finally {
+        leaderboardSection.classList.add("hidden");
+        startBtn.disabled = false;
+        startBtn.textContent = originalText;
     }
-
-    // fall back if something went wrong
-    if (!questionBank || !questionBank.length) {
-        loadSampleQuestions();
-    }
-
-    setupScreen.classList.add("hidden");
-    hud.classList.remove("hidden");
-    leaderboardSection.classList.add("hidden");
-
-    resetGameState();
-    gameState = "playing";
-    lastFrameTime = performance.now();
-
-    leaderboardSection.classList.add("hidden");
-    startBtn.disabled = false;
-    startBtn.textContent = originalText;
 });
 
 // ============================
 // INIT
 // ============================
 renderLeaderboard();
-loadSampleQuestions(); // default questions if backend fails / not used
+loadSampleQuestions();
 resetGameState();
 requestAnimationFrame(gameLoop);
+
+// Preload sets from backend (if available)
+fetchSetResults().catch((e) => console.error(e));

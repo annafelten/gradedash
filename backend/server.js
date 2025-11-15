@@ -3,11 +3,19 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import Anthropic from "@anthropic-ai/sdk";
+import multer from "multer";
+import { createRequire } from "module";
 
 dotenv.config();
 
+const require = createRequire(import.meta.url);
+const pdf = require("pdf-parse"); // <- FIX: use require for pdf-parse
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Multer for in-memory PDF uploads
+const upload = multer({ storage: multer.memoryStorage() });
 
 if (!process.env.ANTHROPIC_API_KEY) {
     console.error("Missing ANTHROPIC_API_KEY in .env");
@@ -15,7 +23,7 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 
 const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+    apiKey: process.env.ANTHROPIC_API_KEY
 });
 
 app.use(cors());
@@ -59,7 +67,8 @@ const STUDY_SETS = [
         meta: "10 questions · created by Student",
         questions: [
             {
-                question: "During which phase of mitosis do sister chromatids separate?",
+                question:
+                    "During which phase of mitosis do sister chromatids separate?",
                 options: ["Prophase", "Metaphase", "Anaphase", "Telophase"],
                 correct_index: 2,
                 explanation: "Sister chromatids split during anaphase."
@@ -88,6 +97,92 @@ function normalizeQuestions(raw) {
                 q.correct_index >= 0 &&
                 q.correct_index < q.options.length
         );
+}
+
+// -------------------------------------------
+// Helper: ask Claude to generate questions from text
+// -------------------------------------------
+async function generateQuestionsFromText(notes, instructions, numQuestions) {
+    const n =
+        typeof numQuestions === "number" && numQuestions > 0
+            ? Math.min(numQuestions, 40)
+            : 12;
+
+    const baseInstruction = `
+You are helping a student create a study game.
+
+You are given some raw notes/syllabus text. 
+You must generate exactly ${n} multiple-choice questions.
+
+FORMAT (IMPORTANT):
+Return ONLY valid JSON. 
+No prose, no markdown, no backticks.
+JSON structure:
+[
+  {
+    "question": "string",
+    "options": ["A", "B", "C", "D"],
+    "correct_index": 0,
+    "explanation": "string"
+  },
+  ...
+]
+
+Rules:
+- Each question MUST have 4 answer options.
+- Exactly one option is correct.
+- "correct_index" is the 0-based index of the correct option.
+- Explanations should be 1–3 sentences.
+`;
+
+    const styleInstruction =
+        instructions && instructions.trim().length > 0
+            ? `USER PREFERENCES:\n${instructions}\n\n`
+            : "";
+
+    const userPrompt = `
+NOTES / SYLLABUS TEXT:
+----------------------
+${notes}
+
+${styleInstruction}
+TASK:
+Using only the information and concepts suggested by the text above (plus basic prerequisite knowledge), generate ${n} questions in the JSON format described earlier. Remember: output JSON only.
+`;
+
+    const message = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 2000,
+        temperature: 0.7,
+        messages: [
+            {
+                role: "user",
+                content: baseInstruction + "\n\n" + userPrompt
+            }
+        ]
+    });
+
+    const text =
+        message.content
+            .map((c) => ("text" in c ? c.text : ""))
+            .join("")
+            .trim() || "";
+
+    let parsed;
+    try {
+        parsed = JSON.parse(text);
+    } catch (err) {
+        console.error("Failed to parse Claude JSON:", err);
+        console.error("Raw content:", text);
+        throw new Error("Claude did not return valid JSON.");
+    }
+
+    const questions = normalizeQuestions(parsed);
+    if (questions.length === 0) {
+        throw new Error("No usable questions generated.");
+    }
+
+    return questions;
 }
 
 // -------------------------------------------
@@ -138,95 +233,67 @@ app.post("/api/generate-questions", async (req, res) => {
             return res.status(400).json({ error: "Missing 'notes' text." });
         }
 
-        const n =
-            typeof numQuestions === "number" && numQuestions > 0
-                ? Math.min(numQuestions, 40)
-                : 12;
-
-        const baseInstruction = `
-You are helping a student create a study game.
-
-You are given some raw notes/syllabus text. 
-You must generate exactly ${n} multiple-choice questions.
-
-FORMAT (IMPORTANT):
-Return ONLY valid JSON. 
-No prose, no markdown, no backticks.
-JSON structure:
-[
-  {
-    "question": "string",
-    "options": ["A", "B", "C", "D"],
-    "correct_index": 0,
-    "explanation": "string"
-  },
-  ...
-]
-
-Rules:
-- Each question MUST have 4 answer options.
-- Exactly one option is correct.
-- "correct_index" is the 0-based index of the correct option.
-- Explanations should be 1–3 sentences.
-`;
-
-        const styleInstruction =
-            instructions && instructions.trim().length > 0
-                ? `USER PREFERENCES:\n${instructions}\n\n`
-                : "";
-
-        const userPrompt = `
-NOTES / SYLLABUS TEXT:
-----------------------
-${notes}
-
-${styleInstruction}
-TASK:
-Using only the information and concepts suggested by the text above (plus basic prerequisite knowledge), generate ${n} questions in the JSON format described earlier. Remember: output JSON only.
-`;
-
-        const message = await anthropic.messages.create({
-            model: "claude-3-haiku-20240307",
-            max_tokens: 2000,
-            temperature: 0.7,
-            messages: [
-                {
-                    role: "user",
-                    content: baseInstruction + "\n\n" + userPrompt
-                }
-            ]
-        });
-
-        const text =
-            message.content
-                .map((c) => ("text" in c ? c.text : ""))
-                .join("")
-                .trim() || "";
-
-        let parsed;
-        try {
-            parsed = JSON.parse(text);
-        } catch (err) {
-            console.error("Failed to parse Claude JSON:", err);
-            console.error("Raw content:", text);
-            return res
-                .status(500)
-                .json({ error: "Claude did not return valid JSON." });
-        }
-
-        const questions = normalizeQuestions(parsed);
-        if (questions.length === 0) {
-            return res
-                .status(500)
-                .json({ error: "No usable questions generated." });
-        }
+        const questions = await generateQuestionsFromText(
+            notes,
+            instructions,
+            numQuestions
+        );
 
         res.json(questions);
     } catch (err) {
         console.error("Error in /api/generate-questions:", err);
-        res.status(500).json({ error: "Internal server error." });
+        res.status(500).json({ error: err.message || "Internal server error." });
     }
 });
+
+// -------------------------------------------
+// POST /api/generate-from-pdf
+// multipart/form-data: pdf (file), instructions?, numQuestions?
+// -------------------------------------------
+app.post(
+    "/api/generate-from-pdf",
+    upload.single("pdf"),
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: "No PDF file uploaded." });
+            }
+
+            const { instructions, numQuestions } = req.body;
+
+            // Extract text from PDF
+            const pdfData = await pdf(req.file.buffer);
+            let text = pdfData.text || "";
+
+            // Optional: trim very long PDFs to keep Claude happy
+            const MAX_CHARS = 12000;
+            if (text.length > MAX_CHARS) {
+                text =
+                    text.slice(0, MAX_CHARS) +
+                    "\n\n[Truncated for question generation]";
+            }
+
+            if (!text.trim()) {
+                return res
+                    .status(400)
+                    .json({ error: "Could not extract text from PDF." });
+            }
+
+            const questions = await generateQuestionsFromText(
+                text,
+                instructions,
+                numQuestions ? Number(numQuestions) : undefined
+            );
+
+            res.json(questions);
+        } catch (err) {
+            console.error("Error in /api/generate-from-pdf:", err);
+            res
+                .status(500)
+                .json({ error: err.message || "Internal server error." });
+        }
+    }
+);
 
 app.listen(PORT, () => {
     console.log(`GradeDash backend listening on http://localhost:${PORT}`);
