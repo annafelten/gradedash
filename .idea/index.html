@@ -1,112 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8" />
-   <title>GradeDash</title>
-   <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <title>GradeDash</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 <div id="ui">
-   <header>
-       <h1>GradeDash</h1>
-       <p class="subtitle">
-           Run the halls, dodge obstacles, and power up by answering questions.
-       </p>
-   </header>
+    <header>
+        <h1>GradeDash</h1>
+        <p class="subtitle">
+            Run the halls, dodge obstacles, and power up by answering questions.
+        </p>
+    </header>
 
+    <!-- Setup screen -->
+    <section id="setup-screen">
+        <label class="field">
+            <span>Player name</span>
+            <input id="player-name-input" type="text" placeholder="e.g., Anna" />
+        </label>
 
-   <!-- Setup screen -->
-   <section id="setup-screen">
-       <label class="field">
-           <span>Player name</span>
-           <input id="player-name-input" type="text" placeholder="e.g., Anna" />
-       </label>
+        <label class="field">
+            <span>(Optional) Paste your notes / study content</span>
+            <textarea
+                    id="notes-input"
+                    placeholder="For now the game uses sample questions. Later, this can become your AI-powered custom question bank."></textarea>
+        </label>
 
+        <button id="start-btn">Start Game</button>
+    </section>
 
-       <label class="field">
-           <span>(Optional) Paste your notes / study content</span>
-           <textarea
-                   id="notes-input"
-                   placeholder="For now the game uses sample questions. Later, this can become your AI-powered custom question bank."></textarea>
-       </label>
+    <!-- HUD -->
+    <section id="hud" class="hidden">
+        <div class="hud-item">Score: <span id="score-text">0</span></div>
+        <div class="hud-item">
+            Streak:
+            <span id="streak-text">0</span>
+            <span id="streak-fire" class="hidden">🔥</span>
+        </div>
+        <div class="hud-item">Player: <span id="player-name-label"></span></div>
+    </section>
 
+    <!-- Question bar (shown during questions) -->
+    <div id="question-overlay" class="overlay-hidden">
+        <div id="question-box">
+            <h2>Pop Quiz! ✏️</h2>
+            <p id="question-text"></p>
+            <div id="answers-container"></div>
+            <p id="explanation-text"></p>
+        </div>
+    </div>
 
-       <button id="start-btn">Start Game</button>
-   </section>
-
-
-   <!-- HUD -->
-   <section id="hud" class="hidden">
-       <div class="hud-item">Score: <span id="score-text">0</span></div>
-       <div class="hud-item">
-           Streak:
-           <span id="streak-text">0</span>
-           <span id="streak-fire" class="hidden">🔥</span>
-       </div>
-       <div class="hud-item">Player: <span id="player-name-label"></span></div>
-   </section>
-
-
-   <!-- Leaderboard -->
-   <section id="leaderboard-section">
-       <h2>Local Leaderboard</h2>
-       <p class="subtitle tiny">
-           Stored in your browser. Top scores from this device.
-       </p>
-       <table id="leaderboard-table">
-           <thead>
-           <tr>
-               <th>#</th>
-               <th>Player</th>
-               <th>Score</th>
-               <th>Best Streak</th>
-           </tr>
-           </thead>
-           <tbody id="leaderboard-body">
-           <!-- Filled by JS -->
-           </tbody>
-       </table>
-   </section>
+    <!-- Leaderboard -->
+    <section id="leaderboard-section">
+        <h2>Local Leaderboard</h2>
+        <p class="subtitle tiny">
+            Stored in your browser. Top scores from this device.
+        </p>
+        <table id="leaderboard-table">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th>Score</th>
+                <th>Best Streak</th>
+            </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+            <!-- Filled by JS -->
+            </tbody>
+        </table>
+    </section>
 </div>
-
 
 <!-- Game canvas -->
 <canvas id="game-canvas" width="800" height="400"></canvas>
 
-
-<!-- Question overlay -->
-<div id="question-overlay" class="overlay-hidden">
-   <div id="question-box" class="overlay-box">
-       <h2>Pop Quiz! ✏️</h2>
-       <p id="question-text"></p>
-       <div id="answers-container"></div>
-       <p id="explanation-text"></p>
-       <button id="continue-btn" class="hidden">Continue Running</button>
-   </div>
-</div>
-
-
 <!-- Game over overlay -->
 <div id="gameover-overlay" class="overlay-hidden">
-   <div id="gameover-box" class="overlay-box">
-       <h2>Game Over</h2>
-       <p id="gameover-feedback"></p>
-       <p>Your score: <span id="final-score">0</span></p>
-       <p>Best streak: <span id="final-streak">0</span></p>
+    <div id="gameover-box" class="overlay-box">
+        <h2>Game Over</h2>
+        <p id="gameover-feedback"></p>
+        <p>Your score: <span id="final-score">0</span></p>
+        <p>Best streak: <span id="final-streak">0</span></p>
 
+        <h3>Submit to Leaderboard</h3>
+        <p id="gameover-name-display"></p>
+        <button id="submit-score-btn">Save Score</button>
 
-       <h3>Submit to Leaderboard</h3>
-       <p id="gameover-name-display"></p>
-       <button id="submit-score-btn">Save Score</button>
-
-
-       <div class="gameover-buttons">
-           <button id="restart-btn">Play Again</button>
-           <button id="back-menu-btn">Back to Menu</button>
-       </div>
-   </div>
+        <div class="gameover-buttons">
+            <button id="restart-btn">Play Again</button>
+            <button id="back-menu-btn">Back to Menu</button>
+        </div>
+    </div>
 </div>
-
 
 <script src="script.js"></script>
 </body>

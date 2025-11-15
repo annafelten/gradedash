@@ -18,8 +18,11 @@ const scoreText = document.getElementById("score-text");
 const streakText = document.getElementById("streak-text");
 const streakFire = document.getElementById("streak-fire");
 
-const questionOverlay = document.getElementById("question-overlay"); // only for hiding
+const questionOverlay = document.getElementById("question-overlay");
+const questionTextEl = document.getElementById("question-text");
+const answersContainer = document.getElementById("answers-container");
 const explanationTextEl = document.getElementById("explanation-text");
+const questionBoxEl = document.getElementById("question-box");
 
 const gameoverOverlay = document.getElementById("gameover-overlay");
 const finalScoreEl = document.getElementById("final-score");
@@ -33,8 +36,9 @@ const submitScoreBtn = document.getElementById("submit-score-btn");
 const leaderboardBody = document.getElementById("leaderboard-body");
 
 // -------- Game constants --------
-const NUM_LANES = 3;
-const laneY = [120, 210, 300]; // vertical centers for lanes
+const NUM_LANES = 4;
+// Spread 4 lanes evenly
+const laneY = [90, 170, 250, 330];
 const PLAYER_X = 140;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 46;
@@ -295,43 +299,6 @@ function draw() {
     ctx.fillStyle = "#14151c";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ----- Question panel on the LEFT -----
-    if ((questionActive || questionPrepare) && activeQuestion) {
-        const boxX = 10;
-        const boxY = 10;
-        const boxW = 260;
-        const boxH = 140;
-
-        ctx.fillStyle = "#151823";
-        ctx.fillRect(boxX, boxY, boxW, boxH);
-
-        ctx.strokeStyle = "#4caf50";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(boxX, boxY, boxW, boxH);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "18px system-ui";
-        ctx.textBaseline = "top";
-        wrapText(
-            ctx,
-            activeQuestion.question,
-            boxX + 10,
-            boxY + 10,
-            boxW - 20,
-            20
-        );
-
-        if (questionPrepare) {
-            ctx.font = "13px system-ui";
-            ctx.fillStyle = "#a5d6a7";
-            ctx.fillText(
-                "Press Enter when you're ready for answer choices.",
-                boxX + 10,
-                boxY + boxH - 22
-            );
-        }
-    }
-
     // Lanes
     for (let i = 0; i < NUM_LANES; i++) {
         ctx.strokeStyle = "#252a3c";
@@ -359,19 +326,20 @@ function draw() {
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
     }
 
-    // Question answer blocks – full text inside the moving blocks
-    ctx.fillStyle = "#3949ab";
-    ctx.font = "14px system-ui";
+    // Moving answer blocks in lanes
     ctx.textBaseline = "middle";
-
     for (const qb of questionBlocks) {
+        ctx.fillStyle = "#3949ab";
         ctx.fillRect(qb.x, qb.y, qb.width, qb.height);
 
+        // Letter label (A, B, C) inside block
         ctx.fillStyle = "#ffffff";
-        const textX = qb.x + 8;
+        ctx.font = "22px system-ui";
+        const label = qb.label || "";
+        const metrics = ctx.measureText(label);
+        const textX = qb.x + (qb.width - metrics.width) / 2;
         const textY = qb.y + qb.height / 2;
-        wrapText(ctx, qb.text, textX, textY - 8, qb.width - 16, 16);
-        ctx.fillStyle = "#3949ab";
+        ctx.fillText(label, textX, textY);
     }
 
     // Instructions
@@ -379,7 +347,7 @@ function draw() {
     ctx.font = "16px system-ui";
     if (gameState === "playing") {
         ctx.fillText(
-            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into an answer block to pick it.",
+            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into a letter block (A/B/C) to choose your answer.",
             12,
             canvas.height - 18
         );
@@ -395,9 +363,10 @@ function draw() {
     if (feedbackTimer > 0 && feedbackMessage) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "16px system-ui";
-        ctx.fillText(feedbackMessage, 12, 170);
+        ctx.fillText(feedbackMessage, 12, 40);
     }
 }
+
 
 // ============================
 // TEXT WRAP HELPER
@@ -462,7 +431,42 @@ function startQuestionPause() {
     questionActive = false;
     questionBlocks = [];
 
-    if (explanationTextEl) explanationTextEl.textContent = "";
+    // Show question bar
+    if (questionOverlay) {
+        questionOverlay.classList.remove("overlay-hidden");
+    }
+
+    // Slight random horizontal shift so it "moves" each time,
+    // but stays within the 800px width and never off-screen.
+    if (questionBoxEl) {
+        const offsets = [-40, -20, 0, 20, 40];
+        const dx = offsets[Math.floor(Math.random() * offsets.length)];
+        questionBoxEl.style.transform = `translateX(${dx}px)`;
+    }
+
+    // Question text
+    if (questionTextEl) {
+        questionTextEl.textContent = activeQuestion.question;
+    }
+
+    // Show up to 4 options in the bar as static white boxes
+    if (answersContainer) {
+        answersContainer.innerHTML = "";
+        const count = Math.min(4, activeQuestion.options.length);
+        for (let idx = 0; idx < count; idx++) {
+            const opt = activeQuestion.options[idx];
+            const div = document.createElement("div");
+            div.className = "answer-static";
+            const label = String.fromCharCode(65 + idx); // A,B,C,D
+            div.textContent = `${label}. ${opt}`;
+            answersContainer.appendChild(div);
+        }
+    }
+
+    if (explanationTextEl) {
+        explanationTextEl.textContent =
+            "Press Enter when you're ready. A/B/C/D blocks will spawn in the lanes.";
+    }
 }
 
 function spawnAnswerBlocks() {
@@ -472,22 +476,24 @@ function spawnAnswerBlocks() {
     questionActive = true;
     questionBlocks = [];
 
-    // Up to 3 options → 3 lanes
+    // Up to 4 options → 4 lanes
     const optionIndices = [];
-    for (let i = 0; i < Math.min(3, activeQuestion.options.length); i++) {
+    const count = Math.min(4, activeQuestion.options.length);
+    for (let i = 0; i < count; i++) {
         optionIndices.push(i);
     }
 
-    // Shuffle lanes
-    const laneOrder = [0, 1, 2].sort(() => Math.random() - 0.5);
-
+    // Shuffle lanes [0,1,2,3]
+    const laneOrder = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
     const startX = canvas.width + 80;
 
     optionIndices.forEach((optIdx, i) => {
         const lane = laneOrder[i];
-        const width = 160;
-        const height = 64;
+        const width = 120;
+        const height = 60;
         const y = laneY[lane] - height / 2;
+
+        const label = String.fromCharCode(65 + optIdx); // A,B,C,D
 
         questionBlocks.push({
             lane,
@@ -496,9 +502,14 @@ function spawnAnswerBlocks() {
             width,
             height,
             answerIndex: optIdx,
-            text: activeQuestion.options[optIdx]
+            label
         });
     });
+
+    if (explanationTextEl) {
+        explanationTextEl.textContent =
+            "Dodge into the lane for A, B, C, or D to choose your answer!";
+    }
 }
 
 function handleLaneAnswer(block) {
@@ -522,17 +533,26 @@ function handleLaneAnswer(block) {
         score += 90 * (1 + streak * 0.3);
         scoreText.textContent = String(Math.floor(score));
 
-        feedbackMessage = "Correct! " + activeQuestion.explanation;
-        feedbackTimer = 4000;
+        feedbackMessage = "Correct!";
+        feedbackTimer = 2000;
+
+        if (explanationTextEl) {
+            explanationTextEl.textContent = "Correct! " + activeQuestion.explanation;
+        }
     } else {
         streak = 0;
         streakText.textContent = "0";
         streakFire.classList.add("hidden");
 
-        feedbackMessage = "Not quite. " + activeQuestion.explanation;
-        feedbackTimer = 4000;
+        feedbackMessage = "Not quite.";
+        feedbackTimer = 2000;
+
+        if (explanationTextEl) {
+            explanationTextEl.textContent = "Not quite. " + activeQuestion.explanation;
+        }
     }
 }
+
 
 // ============================
 // GAME OVER
@@ -540,6 +560,9 @@ function handleLaneAnswer(block) {
 function triggerGameOver() {
     if (gameState === "gameover") return;
     gameState = "gameover";
+    if (questionOverlay) {
+        questionOverlay.classList.add("overlay-hidden");
+    }
 
     questionActive = false;
     questionPrepare = false;
