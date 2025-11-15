@@ -29,8 +29,6 @@ const restartBtn = document.getElementById("restart-btn");
 const backMenuBtn = document.getElementById("back-menu-btn");
 const submitScoreBtn = document.getElementById("submit-score-btn");
 
-const gameoverFeedback = document.getElementById("gameover-feedback");
-
 // Leaderboard elements
 const leaderboardBody = document.getElementById("leaderboard-body");
 
@@ -74,7 +72,6 @@ let feedbackTimer = 0; // ms remaining
 // Questions
 let questionBank = [];
 let questionIndex = 0;
-let questionNumber = 1;
 
 // ============================
 // SAMPLE QUESTIONS
@@ -460,10 +457,6 @@ function startQuestionPause() {
 
     activeQuestion = questionBank[questionIndex % questionBank.length];
     questionIndex++;
-    if(questionIndex >= questionNumber){
-        gameoverFeedback = "You answered all questions!"
-        triggerGameOver();
-    }
 
     questionPrepare = true;
     questionActive = false;
