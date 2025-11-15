@@ -27,6 +27,10 @@ const setSearchInput = document.getElementById("set-search-input");
 const setResults = document.getElementById("set-results");
 
 const notesInput = document.getElementById("notes-input");
+const pdfInput = document.getElementById("pdf-input");
+
+const ANSWER_BLOCK_SPEED_MULT = 0.45; // 45% of normal speed so they linger
+
 const notesQuestionCountInput = document.getElementById(
     "notes-question-count"
 );
@@ -213,45 +217,91 @@ async function generateQuestionsFromNotes(notesText, count, stylePrompt) {
         alert("Could not generate questions. Using sample questions instead.");
         loadSampleQuestions();
         questionIndex = 0;
-        return;
+    }
+}
+
+async function generateQuestionsFromPdf(pdfFile, count, stylePrompt) {
+    const formData = new FormData();
+    formData.append("pdf", pdfFile);
+
+    if (count) formData.append("numQuestions", String(count));
+    if (stylePrompt && stylePrompt.trim().length > 0) {
+        formData.append("instructions", stylePrompt);
     }
 
-    const data = await res.json();
-    questionBank = Array.isArray(data) ? data : [];
-    if (!questionBank.length) {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/generate-from-pdf`, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) {
+            let errMsg = `PDF generation failed (${res.status})`;
+            try {
+                const err = await res.json();
+                if (err && err.error) {
+                    errMsg += `: ${err.error}`;
+                }
+                console.error("PDF generation error:", err);
+            } catch {
+                // ignore JSON parse error
+            }
+            alert(errMsg);
+            throw new Error(errMsg);
+        }
+
+        const data = await res.json();
+        questionBank = Array.isArray(data) ? data : [];
+        if (!questionBank.length) {
+            loadSampleQuestions();
+        }
+        questionIndex = 0;
+    } catch (err) {
+        console.error("Error generating from PDF:", err);
+        alert(
+            "Could not generate questions from the PDF. Using sample questions instead."
+        );
         loadSampleQuestions();
+        questionIndex = 0;
     }
-    questionIndex = 0;
 }
+
 
 async function fetchSetResults() {
     const q = setSearchInput.value.trim();
-    const res = await fetch(
-        `${BACKEND_URL}/api/sets?query=${encodeURIComponent(q)}`
-    );
-    const sets = await res.json();
+    try {
+        const res = await fetch(
+            `${BACKEND_URL}/api/sets?query=${encodeURIComponent(q)}`
+        );
+        if (!res.ok) {
+            console.error("Sets request failed:", res.status, res.statusText);
+            return;
+        }
+        const sets = await res.json();
 
-    setResults.innerHTML = "";
-    selectedSetId = null;
+        setResults.innerHTML = "";
+        selectedSetId = null;
 
-    sets.forEach((s) => {
-        const div = document.createElement("div");
-        div.className = "set-result";
-        div.dataset.setId = s.id;
-        div.innerHTML = `
-      <div class="set-title">${s.title}</div>
-      <div class="set-meta">${s.questionCount} questions · ${s.meta}</div>
-    `;
-        div.addEventListener("click", () => {
-            // clear previous selection
-            document
-                .querySelectorAll(".set-result.selected")
-                .forEach((el) => el.classList.remove("selected"));
-            div.classList.add("selected");
-            selectedSetId = s.id;
+        sets.forEach((s) => {
+            const div = document.createElement("div");
+            div.className = "set-result";
+            div.dataset.setId = s.id;
+            div.innerHTML = `
+       <div class="set-title">${s.title}</div>
+       <div class="set-meta">${s.questionCount} questions · ${s.meta}</div>
+     `;
+            div.addEventListener("click", () => {
+                document
+                    .querySelectorAll(".set-result.selected")
+                    .forEach((el) => el.classList.remove("selected"));
+                div.classList.add("selected");
+                selectedSetId = s.id;
+            });
+            setResults.appendChild(div);
         });
-        setResults.appendChild(div);
-    });
+    } catch (err) {
+        console.error("Error fetching sets:", err);
+    }
 }
 
 // simple debounce
@@ -381,13 +431,13 @@ function update(dt) {
     if (questionActive) {
         for (let i = questionBlocks.length - 1; i >= 0; i--) {
             const qb = questionBlocks[i];
-            qb.x -= speed;
+            qb.x -= speed * ANSWER_BLOCK_SPEED_MULT; // slower so they stay visible longer
             if (qb.x + qb.width < 0) {
                 questionBlocks.splice(i, 1);
             }
         }
 
-        // If they all pass without collision, you missed the question
+        // If all pass without collision, you missed the question
         if (questionBlocks.length === 0) {
             questionActive = false;
             lastQuestionTime = now;
@@ -399,7 +449,8 @@ function update(dt) {
         }
     }
 
-    // Collisions with normal obstacles → game over
+
+    // Collisions with distractions → game over
     for (const obs of obstacles) {
         if (rectIntersect(player, obs)) {
             triggerGameOver("You ran into a distraction.");
@@ -478,16 +529,26 @@ function draw() {
         ctx.fillText(label, textX, textY);
     }
 
-    // Moving answer blocks in lanes (with inline text)
+    // Answer blocks
+// Answer blocks (white cards, black text, more readable)
     ctx.textBaseline = "top";
     for (const qb of questionBlocks) {
-        ctx.fillStyle = "#3949ab";
+        // Card background
+        ctx.fillStyle = "#ffffff";
         ctx.fillRect(qb.x, qb.y, qb.width, qb.height);
 
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px system-ui";
-        const labelText = `${qb.label}. ${qb.text || ""}`;
-        wrapText(ctx, labelText, qb.x + 6, qb.y + 6, qb.width - 12, 14);
+        // Card border
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(qb.x, qb.y, qb.width, qb.height);
+
+        // Text: big, black, left-aligned
+        ctx.fillStyle = "#000000";
+        ctx.font = "16px system-ui";
+
+        // e.g. "A) eigenvalue" instead of tiny wall of text
+        const labelText = `${qb.label}) ${qb.text || ""}`;
+        wrapText(ctx, labelText, qb.x + 10, qb.y + 10, qb.width - 20, 20);
     }
 
     // Instructions
@@ -628,8 +689,8 @@ function spawnAnswerBlocks() {
 
     optionIndices.forEach((optIdx, i) => {
         const lane = laneOrder[i];
-        const width = 200;
-        const height = 60;
+        const width = 260;   // wider cards
+        const height = 80;   // taller so text isn’t cramped
         const y = laneY[lane] - height / 2;
 
         const label = String.fromCharCode(65 + optIdx); // A,B,C,D
@@ -823,27 +884,28 @@ startBtn.addEventListener("click", async () => {
     const originalText = startBtn.textContent;
     startBtn.textContent = "Loading questions...";
 
-    if (modeExistingRadio.checked) {
-        if (!selectedSetId) {
-            alert("Please choose a study set first.");
-            startBtn.disabled = false;
-            startBtn.textContent = originalText;
-            return;
-        }
-        await loadQuestionsFromExistingSet(selectedSetId);
-    } else {
-        const notes = (notesInput.value || "").trim();
-        if (!notes) {
-            alert("Paste some notes or topics first.");
-            startBtn.disabled = false;
-            startBtn.textContent = originalText;
-            return;
-        }
-        const count =
-            parseInt(notesQuestionCountInput.value, 10) || 12;
+    try {
+        const count = parseInt(notesQuestionCountInput.value, 10) || 12;
         const style = notesStyleInput.value;
-        await generateQuestionsFromNotes(notes, count, style);
-    }
+        const pdfFile = pdfInput.files && pdfInput.files[0];
+
+        if (pdfFile) {
+            // ALWAYS prefer PDF if provided
+            await generateQuestionsFromPdf(pdfFile, count, style);
+        } else if (modeExistingRadio.checked) {
+            if (!selectedSetId) {
+                alert("Please choose a study set first.");
+                return;
+            }
+            await loadQuestionsFromExistingSet(selectedSetId);
+        } else {
+            const notes = (notesInput.value || "").trim();
+            if (!notes) {
+                alert("Upload a PDF or paste some notes first.");
+                return;
+            }
+            await generateQuestionsFromNotes(notes, count, style);
+        }
 
     // fall back if something went wrong
     if (!questionBank || !questionBank.length) {
@@ -854,14 +916,18 @@ startBtn.addEventListener("click", async () => {
     hud.classList.remove("hidden");
     leaderboardSection.classList.add("hidden");
 
-    resetGameState();
-    gameState = "playing";
-    lastFrameTime = performance.now();
-
-    leaderboardSection.classList.add("hidden");
-    startBtn.disabled = false;
-    startBtn.textContent = originalText;
+        resetGameState();
+        gameState = "playing";
+        lastFrameTime = performance.now();
+    } catch (err) {
+        console.error("Error in Start Game:", err);
+        alert("Something went wrong starting the game. Check the console.");
+    } finally {
+        startBtn.disabled = false;
+        startBtn.textContent = originalText;
+    }
 });
+
 
 // ============================
 // INIT
