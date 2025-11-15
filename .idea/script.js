@@ -81,14 +81,33 @@ const OBSTACLE_SPAWN_INTERVAL = 1500;
 const BASE_SPEED_CONST = 5;
 
 // Fun "distraction" obstacles
+// Fun "distraction" obstacles – now as image sprites
+// (paths are relative to index.html; adjust if your structure is different)
 const OBSTACLE_TYPES = [
-    {kind: "tiktok", color: "#ff0050", label: "TikTok"},
-    {kind: "phone", color: "#2196f3", label: "Phone"},
-    {kind: "sleep", color: "#9c27b0", label: "Zzz"},
-    {kind: "snack", color: "#ff9800", label: "Snack"},
-    {kind: "drama", color: "#f44336", label: "Tea"}
+    { kind: "tiktok", src: "assets/tiktok.png" },
+    { kind: "instagram", src: "assets/instagram.png" },
+    { kind: "netflix", src: "assets/netflix.png" },
+    { kind: "ice", src: "assets/ice.gif" },
+    { kind: "funny1", src: "assets/funny1.gif" },
+    { kind: "funny2", src: "assets/funny2.gif" }
 ];
 
+// Preload images into a cache so we don't recreate Image() every frame
+// Preload images into a cache so we don't recreate Image() every frame
+const OBSTACLE_IMAGES = {};
+for (const type of OBSTACLE_TYPES) {
+    const img = new Image();
+    img.src = type.src;
+
+    img.onload = () => {
+        console.log("[OBSTACLE IMG] loaded:", type.src, img.naturalWidth, img.naturalHeight);
+    };
+    img.onerror = () => {
+        console.error("[OBSTACLE IMG] FAILED to load:", type.src);
+    };
+
+    OBSTACLE_IMAGES[type.kind] = img;
+}
 // ============================
 // GAME STATE
 // ============================
@@ -522,18 +541,19 @@ function draw() {
     }
 
     // Obstacles (fun distractions)
+// Obstacles (distractions) – draw images instead of text boxes
+// Obstacles (distractions) – draw images if loaded, else red box
     for (const obs of obstacles) {
-        ctx.fillStyle = obs.color || "#e53935";
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        const img = obs.img;
 
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px system-ui";
-        ctx.textBaseline = "middle";
-        const label = obs.label || "";
-        const metrics = ctx.measureText(label);
-        const textX = obs.x + (obs.width - metrics.width) / 2;
-        const textY = obs.y + obs.height / 2;
-        ctx.fillText(label, textX, textY);
+        // naturalWidth > 0 means the image actually loaded (not 404)
+        if (img && img.naturalWidth > 0) {
+            ctx.drawImage(img, obs.x, obs.y, obs.width, obs.height);
+        } else {
+            // Fallback: visible red box so you can still play
+            ctx.fillStyle = "#e53935";
+            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        }
     }
 
     // Answer blocks
@@ -610,11 +630,16 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 // ============================
 function spawnObstacle() {
     const lane = Math.floor(Math.random() * NUM_LANES);
-    const height = 40;
-    const width = 80;
+
+    const size = 60;
+    const width = size;
+    const height = size;
     const y = laneY[lane] - height / 2;
-    const type =
-        OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+
+    const type = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+    const img = OBSTACLE_IMAGES[type.kind];
+
+    console.log("[SPAWN] obstacle", type.kind, "lane", lane);
 
     obstacles.push({
         lane,
@@ -622,10 +647,11 @@ function spawnObstacle() {
         y,
         width,
         height,
-        color: type.color,
-        label: type.label
+        kind: type.kind,
+        img
     });
 }
+
 
 function rectIntersect(a, b) {
     return !(

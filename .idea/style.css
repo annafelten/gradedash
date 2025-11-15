@@ -6,8 +6,9 @@ body {
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+    /* CHANGED: Green gradient to purple gradient */
     background:
-            radial-gradient(circle at top left, #14532d 0, #020617 55%, #020617 100%);
+            radial-gradient(circle at top left, #2E1040 0, #0F0517 55%, #0F0517 100%);
     color: #f9fafb;
     min-height: 100vh;
 
@@ -50,7 +51,8 @@ header {
     padding: 12px 16px 10px;
     border-radius: 18px;
     background: rgba(5, 11, 10, 0.98);
-    border: 1px solid #173827;
+    /* CHANGED: Green border to purple border */
+    border: 1px solid #3d1f5c;
     box-shadow: 0 18px 42px rgba(0, 0, 0, 0.65);
     position: relative;
 }
@@ -83,7 +85,7 @@ header::after {
     width: 72px;
     height: 3px;
     border-radius: 999px;
-    background: linear-gradient(to right, #b31b1b, #f97316);
+    background: linear-gradient(to right, #b31b1b, #f97316); /* Kept Cornell red accent */
 }
 
 /* --------------------------
@@ -105,7 +107,7 @@ header::after {
 
 input,
 textarea {
-    box-sizing: border-box; /* Add this to fix width issues */
+    box-sizing: border-box;
     width: 100%;
     padding: 6px 8px;
     border-radius: 8px;
@@ -123,8 +125,9 @@ textarea {
 
 input:focus,
 textarea:focus {
-    border-color: #16a34a;
-    box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.5);
+    /* CHANGED: Green focus to purple focus */
+    border-color: #9c27b0;
+    box-shadow: 0 0 0 1px rgba(156, 39, 176, 0.5);
     background: #020817;
 }
 
@@ -139,7 +142,8 @@ button {
     margin-top: 8px;
     border: none;
     border-radius: 999px;
-    background: #16a34a;
+    /* CHANGED: Green button to purple button */
+    background: #9c27b0;
     color: #f9fafb;
     font-weight: 600;
     font-size: 0.9rem;
@@ -151,7 +155,8 @@ button {
 }
 
 button:hover {
-    background: #15803d;
+    /* CHANGED: Darker green to darker purple */
+    background: #7b1fa2;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
     transform: translateY(-1px);
 }
@@ -177,7 +182,8 @@ button:disabled {
     padding: 14px 16px 16px;
     background: rgba(5, 11, 10, 0.97);
     border-radius: 18px;
-    border: 1px solid #173827;
+    /* CHANGED: Green border to purple border */
+    border: 1px solid #3d1f5c;
     box-shadow: 0 18px 42px rgba(0, 0, 0, 0.7);
 }
 
@@ -224,16 +230,18 @@ button:disabled {
 
 /* Selected state using :has (modern browsers) */
 .mode-toggle label:has(input:checked) {
-    background: #064e3b;
-    border-color: #16a34a;
+    /* CHANGED: Green active to purple active */
+    background: #4a0e63;
+    border-color: #9c27b0;
     color: #ecfdf5;
     font-weight: 600;
 }
 
 /* Hover */
 .mode-toggle label:hover {
-    background: #022c22;
-    border-color: #16a34a;
+    /* CHANGED: Green hover to purple hover */
+    background: #5f1a82;
+    border-color: #9c27b0;
 }
 
 /* --------------------------
@@ -266,8 +274,9 @@ button:disabled {
 }
 
 .set-result.selected {
-    background: #064e3b;
-    border-color: #16a34a;
+    /* CHANGED: Green selected to purple selected */
+    background: #4a0e63;
+    border-color: #9c27b0;
 }
 
 .set-title {
@@ -298,14 +307,16 @@ button:disabled {
     font-size: 0.95rem;
     padding: 6px 8px;
     border-radius: 999px;
-    background: radial-gradient(circle at left, #14532d, #020617);
-    border: 1px solid #15803d;
+    /* CHANGED: Green gradient to purple gradient */
+    background: radial-gradient(circle at left, #2E1040, #0F0517);
+    /* CHANGED: Green border to purple border */
+    border: 1px solid #7b1fa2;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.75);
 }
 
 .hud-item {
     padding: 4px 10px;
-    background: rgba(6, 18, 12, 0.95);
+    background: rgba(6, 18, 12, 0.95); /* Kept this dark bg for contrast */
     border-radius: 999px;
     border: 1px solid #1f2937;
     display: flex;
@@ -342,7 +353,8 @@ button:disabled {
     background: rgba(7, 12, 10, 0.98);
     border-radius: 16px;
     padding: 8px 10px 10px;
-    border: 1px solid #14532d;
+    /* CHANGED: Green border to purple border */
+    border: 1px solid #3d1f5c;
     text-align: left;
     width: 100%;
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.65);
@@ -353,7 +365,8 @@ button:disabled {
     font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    color: #bbf7d0;
+    /* CHANGED: Light green text to light purple */
+    color: #e1bee7;
 }
 
 #question-text {
@@ -365,7 +378,8 @@ button:disabled {
 #explanation-text {
     margin-top: 2px;
     font-size: 0.8rem;
-    color: #a5d6a7;
+    /* CHANGED: Pale green text to pale purple */
+    color: #ce93d8;
 }
 
 /* --------------------------
@@ -376,7 +390,8 @@ button:disabled {
 #game-canvas {
     margin-top: 32px;
     border-radius: 12px;
-    border: 2px solid #1d3b2a;
+    /* CHANGED: Green border to purple border */
+    border: 2px solid #3d1f5c;
     background: #0c1510;
     display: block;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
@@ -399,7 +414,8 @@ body.playing #game-canvas {
     padding: 12px 14px 14px;
     background: rgba(5, 11, 10, 0.97);
     border-radius: 18px;
-    border: 1px solid #173827;
+    /* CHANGED: Green border to purple border */
+    border: 1px solid #3d1f5c;
     box-shadow: 0 18px 42px rgba(0, 0, 0, 0.7);
 }
 
@@ -408,7 +424,8 @@ body.playing #game-canvas {
     font-size: 1.1rem;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: #bbf7d0;
+    /* CHANGED: Light green text to light purple */
+    color: #e1bee7;
 }
 
 #leaderboard-table {
@@ -466,7 +483,7 @@ body.playing #game-canvas {
     width: 90%;
     box-shadow: 0 22px 50px rgba(0, 0, 0, 0.85);
     text-align: center;
-    border: 1px solid #b31b1b; /* Cornell accent */
+    border: 1px solid #b31b1b; /* Kept Cornell red accent */
 }
 
 #gameover-box h2 {
