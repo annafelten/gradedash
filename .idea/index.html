@@ -77,13 +77,27 @@
 <!-- Game canvas -->
 <canvas id="game-canvas" width="800" height="400"></canvas>
 
+
+<!-- Question overlay -->
+<div id="question-overlay" class="overlay overlay-hidden">
+   <div id="question-box" class="overlay-box">
+       <h2>Pop Quiz! ✏️</h2>
+       <p id="question-text"></p>
+       <div id="answers-container"></div>
+       <p id="explanation-text"></p>
+       <button id="continue-btn" class="hidden">Continue Running</button>
+   </div>
+</div>
+
+
 <!-- Game over overlay -->
-<div id="gameover-overlay" class="overlay-hidden">
-    <div id="gameover-box" class="overlay-box">
-        <h2>Game Over</h2>
-        <p id="gameover-feedback"></p>
-        <p>Your score: <span id="final-score">0</span></p>
-        <p>Best streak: <span id="final-streak">0</span></p>
+<div id="gameover-overlay" class="overlay overlay-hidden">
+   <div id="gameover-box" class="overlay-box">
+       <h2>Game Over</h2>
+       <p id="gameover-feedback"></p>
+       <p>Your score: <span id="final-score">0</span></p>
+       <p>Best streak: <span id="final-streak">0</span></p>
+
 
         <h3>Submit to Leaderboard</h3>
         <p id="gameover-name-display"></p>
