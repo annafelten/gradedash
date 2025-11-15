@@ -17,6 +17,7 @@ body {
     width: 800px;
     margin-top: 10px;
     text-align: center;
+    position: relative;
 }
 
 
@@ -210,10 +211,16 @@ button:active {
 
 /* ----- Question bar ABOVE the game ----- */
 
+/* ----- Question bar pinned over the UI ----- */
+
 #question-overlay {
-    width: 800px;              /* match canvas width */
-    margin-top: 10px;
-    margin-bottom: 4px;
+    position: absolute;
+    top: 190px;              /* tweak this to sit where you want */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;            /* match canvas width */
+    margin: 0;               /* no margins, we’re positioning it */
+    z-index: 5;
 }
 
 #question-box {
@@ -223,6 +230,7 @@ button:active {
     border: 1px solid #252a3c;
     text-align: left;
 }
+
 
 #question-box h2 {
     margin: 0 0 4px;
