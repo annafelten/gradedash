@@ -247,9 +247,18 @@ async function generateQuestionsFromPdf(pdfFile, count, stylePrompt) {
         });
 
         if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            console.error("PDF generation error:", err);
-            throw new Error("PDF generation failed");
+            let errMsg = `PDF generation failed (${res.status})`;
+            try {
+                const err = await res.json();
+                if (err && err.error) {
+                    errMsg += `: ${err.error}`;
+                }
+                console.error("PDF generation error:", err);
+            } catch {
+                // ignore JSON parse error
+            }
+            alert(errMsg);
+            throw new Error(errMsg);
         }
 
         const data = await res.json();
@@ -268,33 +277,30 @@ async function generateQuestionsFromPdf(pdfFile, count, stylePrompt) {
     }
 }
 
+
 async function fetchSetResults() {
     const q = setSearchInput.value.trim();
-    setResults.innerHTML = "<small>Loading sets...</small>";
-    selectedSetId = null;
-
     try {
         const res = await fetch(
             `${BACKEND_URL}/api/sets?query=${encodeURIComponent(q)}`
         );
-        if (!res.ok) throw new Error("Failed to fetch sets");
+        if (!res.ok) {
+            console.error("Sets request failed:", res.status, res.statusText);
+            return;
+        }
         const sets = await res.json();
 
         setResults.innerHTML = "";
-        if (!sets.length) {
-            setResults.innerHTML =
-                '<small class="error">No sets found. Using demo sets only.</small>';
-            return;
-        }
+        selectedSetId = null;
 
-        sets.forEach((s, idx) => {
+        sets.forEach((s) => {
             const div = document.createElement("div");
             div.className = "set-result";
             div.dataset.setId = s.id;
             div.innerHTML = `
-        <div class="set-title">${s.title}</div>
-        <div class="set-meta">${s.questionCount} questions · ${s.meta}</div>
-      `;
+       <div class="set-title">${s.title}</div>
+       <div class="set-meta">${s.questionCount} questions · ${s.meta}</div>
+     `;
             div.addEventListener("click", () => {
                 document
                     .querySelectorAll(".set-result.selected")
@@ -303,17 +309,9 @@ async function fetchSetResults() {
                 selectedSetId = s.id;
             });
             setResults.appendChild(div);
-
-            // Auto-select first result for convenience
-            if (idx === 0) {
-                div.classList.add("selected");
-                selectedSetId = s.id;
-            }
         });
     } catch (err) {
         console.error("Error fetching sets:", err);
-        setResults.innerHTML =
-            '<small class="error">Could not load sets from backend. You can still play with sample questions.</small>';
     }
 }
 
@@ -883,35 +881,26 @@ startBtn.addEventListener("click", async () => {
     startBtn.textContent = "Loading questions...";
 
     try {
-        if (modeExistingRadio.checked) {
-            // If nothing explicitly selected but we have a first result, use it
-            if (!selectedSetId) {
-                const first = document.querySelector(".set-result");
-                if (first) {
-                    selectedSetId = first.dataset.setId;
-                    first.classList.add("selected");
-                }
-            }
+        const count = parseInt(notesQuestionCountInput.value, 10) || 12;
+        const style = notesStyleInput.value;
+        const pdfFile = pdfInput.files && pdfInput.files[0];
+
+        if (pdfFile) {
+            // ALWAYS prefer PDF if provided
+            await generateQuestionsFromPdf(pdfFile, count, style);
+        } else if (modeExistingRadio.checked) {
             if (!selectedSetId) {
                 alert("Please choose a study set first.");
                 return;
             }
             await loadQuestionsFromExistingSet(selectedSetId);
         } else {
-            const count = parseInt(notesQuestionCountInput.value, 10) || 12;
-            const style = notesStyleInput.value;
-            const pdfFile = pdfInput.files && pdfInput.files[0];
-
-            if (pdfFile) {
-                await generateQuestionsFromPdf(pdfFile, count, style);
-            } else {
-                const notes = (notesInput.value || "").trim();
-                if (!notes) {
-                    alert("Upload a PDF or paste some notes first.");
-                    return;
-                }
-                await generateQuestionsFromNotes(notes, count, style);
+            const notes = (notesInput.value || "").trim();
+            if (!notes) {
+                alert("Upload a PDF or paste some notes first.");
+                return;
             }
+            await generateQuestionsFromNotes(notes, count, style);
         }
 
         if (!questionBank || !questionBank.length) {
@@ -926,14 +915,14 @@ startBtn.addEventListener("click", async () => {
         gameState = "playing";
         lastFrameTime = performance.now();
     } catch (err) {
-        console.error("Error starting game:", err);
+        console.error("Error in Start Game:", err);
         alert("Something went wrong starting the game. Check the console.");
     } finally {
-        leaderboardSection.classList.add("hidden");
         startBtn.disabled = false;
         startBtn.textContent = originalText;
     }
 });
+
 
 // ============================
 // INIT
