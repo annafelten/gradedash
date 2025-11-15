@@ -84,12 +84,12 @@ const BASE_SPEED_CONST = 5;
 // Fun "distraction" obstacles – now as image sprites
 // (paths are relative to index.html; adjust if your structure is different)
 const OBSTACLE_TYPES = [
-    { kind: "tiktok", src: "assets/tiktok.png" },
-    { kind: "instagram", src: "assets/instagram.png" },
-    { kind: "netflix", src: "assets/netflix.png" },
-    { kind: "ice", src: "assets/ice.gif" },
-    { kind: "funny1", src: "assets/funny1.gif" },
-    { kind: "funny2", src: "assets/funny2.gif" }
+    { kind: "tiktok",    src: "../assets/tiktok.png" },
+    { kind: "instagram", src: "../assets/instagram.png" },
+    { kind: "netflix",   src: "../assets/netflix.png" },
+    { kind: "ice",       src: "../assets/ice.gif" },
+    { kind: "funny1",    src: "../assets/funny1.gif" },
+    { kind: "funny2",    src: "../assets/funny2.gif" }
 ];
 
 // Preload images into a cache so we don't recreate Image() every frame
