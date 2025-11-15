@@ -1,7 +1,7 @@
 
 ![gradedash](https://github.coecis.cornell.edu/user-attachments/assets/11da56ce-19b7-402c-85f8-28ec494c9003)
 
-# GradeDash
+# GradeDash 📗
 
 ## Project Overview
 GradeDash is an AI-powered tool designed to help students become more resilient in their educational endevours. Our solution leverages Claude’s advanced AI capabilities to provide an interactive, adaptive, and gamified learning experience which can be catered to each student’s specific needs.
@@ -22,8 +22,7 @@ The game structure ensures that students remain focused, preventing attention fr
 
 Our goal is to make learning feel less like a chore and more like a challenge that’s fun, interactive, and rewarding. By blending AI customization with gamification, we create a space where students genuinely enjoy testing their knowledge, retain information more effectively, and build confidence in their abilities—all while having fun and staying engaged.
 
-
-### Key Features
+### Key Features<img width="1308" alt="gradeddash" src="https://github.coecis.cornell.edu/user-attachments/assets/34b2c4a3-2f01-455c-beb1-2beb9f4b6d3c" />
 
 - **AI-Generated Questions**
   - Students choose the topic (e.g., “Linear Algebra Prelim 2,” “Biology Unit 3,” etc.).
