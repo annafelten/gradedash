@@ -14,8 +14,8 @@
         </p>
     </header>
 
-    <!-- Setup screen -->
     <section id="setup-screen">
+        <h2>Set up your run</h2>
         <label class="field">
             <span>Player name</span>
             <input id="player-name-input" type="text" placeholder="e.g., Anna" />
@@ -24,29 +24,26 @@
         <div class="mode-toggle">
             <label>
                 <input type="radio" name="mode" id="mode-existing" checked />
-                Use existing set
+                <span>Use existing set</span>
             </label>
             <label>
                 <input type="radio" name="mode" id="mode-notes" />
-                Generate from my notes (Claude)
+                <span>Generate from my notes</span>
             </label>
         </div>
 
-        <!-- Existing sets mode -->
         <div id="existing-mode-panel">
             <label class="field">
                 <span>Search shared sets</span>
                 <input
                         id="set-search-input"
                         type="text"
-                        placeholder="e.g. linear algebra prelim 2"
+                        placeholder="e.g. Linear Algebra Prelim 2"
                 />
             </label>
             <div id="set-results"></div>
-            <small>Click a set to select it, then Start Game.</small>
         </div>
 
-        <!-- Notes → Claude mode -->
         <div id="notes-mode-panel" class="hidden">
             <label class="field">
                 <span>Paste your notes / syllabus / topics</span>
@@ -55,99 +52,90 @@
                         placeholder="Paste notes, syllabus, lecture text, etc."
                 ></textarea>
             </label>
-
-            <label class="field">
-                <span>How many questions?</span>
-                <input
-                        id="notes-question-count"
-                        type="number"
-                        min="4"
-                        max="40"
-                        value="12"
-                />
-            </label>
-
+            <div class="field-row">
+                <label class="field">
+                    <span>How many questions?</span>
+                    <input
+                            id="notes-question-count"
+                            type="number"
+                            min="4"
+                            max="40"
+                            value="12"
+                    />
+                </label>
+                <label class="field">
+                    <span>Upload PDF notes</span>
+                    <input type="file" id="pdf-input" accept=".pdf" />
+                </label>
+            </div>
             <label class="field">
                 <span>(Optional) How should Claude ask?</span>
                 <textarea
                         id="notes-style-input"
-                        placeholder="e.g. Focus on conceptual traps, multiple-choice, similar to Cornell prelims."
+                        placeholder="e.g. Focus on conceptual traps, multiple-choice..."
                 ></textarea>
             </label>
-            <small>
-                We'll send this plus your notes to Claude to generate the best questions
-                for what you're trying to learn.
-            </small>
         </div>
-
-        <label class="field">
-            <span>Upload PDF notes</span>
-            <input type="file" id="pdf-input" accept=".pdf" />
-        </label>
-
         <button id="start-btn">Start Game</button>
     </section>
 
-    <!-- HUD -->
-    <section id="hud" class="hidden">
-        <div class="hud-item">Score: <span id="score-text">0</span></div>
-        <div class="hud-item">
-            Streak:
-            <span id="streak-text">0</span>
-            <span id="streak-fire" class="hidden">🔥</span>
-        </div>
-        <div class="hud-item">Player: <span id="player-name-label"></span></div>
-    </section>
-
-    <!-- Question bar (only question text; answers are in-lane blocks) -->
-    <div id="question-overlay" class="question-hidden">
-        <div id="question-box">
-            <h2>Pop Quiz! ✏️</h2>
-            <p id="question-text"></p>
-            <p id="explanation-text"></p>
-        </div>
-    </div>
-
-    <!-- Leaderboard -->
     <section id="leaderboard-section">
-        <h2>Local Leaderboard</h2>
-        <p class="subtitle tiny">
-            Stored in your browser. Top scores from this device.
-        </p>
+        <h2>Local leaderboard</h2>
         <table id="leaderboard-table">
             <thead>
             <tr>
                 <th>#</th>
                 <th>Player</th>
                 <th>Score</th>
-                <th>Best Streak</th>
+                <th>Best streak</th>
             </tr>
             </thead>
             <tbody id="leaderboard-body">
-            <!-- Filled by JS -->
             </tbody>
         </table>
     </section>
 </div>
 
-<!-- Game canvas -->
-<canvas id="game-canvas" width="800" height="400"></canvas>
+<div id="game-column">
+    <section id="hud" class="hidden">
+        <div class="hud-item">Score <span id="score-text">0</span></div>
+        <div class="hud-item">
+            Streak
+            <span id="streak-text">0</span>
+            <span id="streak-fire" class="hidden">🔥</span>
+        </div>
+        <div class="hud-item">
+            Player
+            <span id="player-name-label"></span>
+        </div>
+    </section>
 
-<!-- Game over overlay -->
+    <div id="question-overlay" class="question-hidden">
+        <div id="question-box">
+            <h2>Pop quiz ✏️</h2>
+            <p id="question-text"></p>
+            <p id="explanation-text"></p>
+        </div>
+    </div>
+
+    <canvas id="game-canvas" width="800" height="400"></canvas>
+</div>
+
+
 <div id="gameover-overlay" class="overlay overlay-hidden">
     <div id="gameover-box" class="overlay-box">
-        <h2>Game Over</h2>
+        <h2>Game over</h2>
         <p id="gameover-feedback"></p>
         <p>Your score: <span id="final-score">0</span></p>
         <p>Best streak: <span id="final-streak">0</span></p>
 
-        <h3>Submit to Leaderboard</h3>
+        <h3>Submit to leaderboard</h3>
         <p id="gameover-name-display"></p>
-        <button id="submit-score-btn">Save Score</button>
+        <button id="submit-score-btn">Save score</button>
 
         <div class="gameover-buttons">
-            <button id="restart-btn">Play Again</button>
-            <button id="back-menu-btn">Back to Menu</button>
+            <button id="restart-btn">Play again</button>
+            <button id="back-menu-btn">Back to menu</button>
         </div>
     </div>
 </div>

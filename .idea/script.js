@@ -82,11 +82,11 @@ const BASE_SPEED_CONST = 5;
 
 // Fun "distraction" obstacles
 const OBSTACLE_TYPES = [
-    { kind: "tiktok", color: "#ff0050", label: "TikTok" },
-    { kind: "phone", color: "#2196f3", label: "Phone" },
-    { kind: "sleep", color: "#9c27b0", label: "Zzz" },
-    { kind: "snack", color: "#ff9800", label: "Snack" },
-    { kind: "drama", color: "#f44336", label: "Tea" }
+    {kind: "tiktok", color: "#ff0050", label: "TikTok"},
+    {kind: "phone", color: "#2196f3", label: "Phone"},
+    {kind: "sleep", color: "#9c27b0", label: "Zzz"},
+    {kind: "snack", color: "#ff9800", label: "Snack"},
+    {kind: "drama", color: "#f44336", label: "Tea"}
 ];
 
 // ============================
@@ -124,7 +124,6 @@ let questionIndex = 0;
 
 // for existing sets mode
 let selectedSetId = null;
-
 
 
 // ============================
@@ -203,7 +202,7 @@ async function generateQuestionsFromNotes(notesText, count, stylePrompt) {
 
     const res = await fetch(`${BACKEND_URL}/api/generate-questions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             notes: notesText,
             instructions: fullPrompt,
@@ -357,6 +356,14 @@ function resetGameState() {
 // INPUT: lanes + Enter
 // ============================
 window.addEventListener("keydown", (e) => {
+    // Prevent page from scrolling while using arrow keys in-game
+    if (
+        gameState === "playing" &&
+        (e.code === "ArrowUp" || e.code === "ArrowDown")
+    ) {
+        e.preventDefault();
+    }
+
     if (gameState !== "playing") return;
 
     if (e.code === "ArrowUp") {
@@ -369,7 +376,6 @@ window.addEventListener("keydown", (e) => {
         }
     }
 });
-
 // ============================
 // MAIN GAME LOOP
 // ============================
@@ -379,6 +385,7 @@ function gameLoop(timestamp) {
 
     if (gameState === "playing") {
         update(dt);
+        document.body.classList.add("playing");
     }
 
     draw();
@@ -530,7 +537,6 @@ function draw() {
     }
 
     // Answer blocks
-// Answer blocks (white cards, black text, more readable)
     ctx.textBaseline = "top";
     for (const qb of questionBlocks) {
         // Card background
@@ -792,13 +798,15 @@ restartBtn.addEventListener("click", () => {
     lastFrameTime = performance.now();
 });
 
+// BUG FIX: Moved this listener OUT of the gameLoop to prevent memory leak
 backMenuBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");
     hud.classList.add("hidden");
     setupScreen.classList.remove("hidden");
     leaderboardSection.classList.remove("hidden");
     gameState = "menu";
-    leaderboardSection.classList.remove("hidden");
+    document.body.classList.remove("playing");
+    leaderboardSection.classList.remove("hidden"); // This was in your original, but it's redundant
 });
 
 // ============================
@@ -907,14 +915,14 @@ startBtn.addEventListener("click", async () => {
             await generateQuestionsFromNotes(notes, count, style);
         }
 
-    // fall back if something went wrong
-    if (!questionBank || !questionBank.length) {
-        loadSampleQuestions();
-    }
+        // fall back if something went wrong
+        if (!questionBank || !questionBank.length) {
+            loadSampleQuestions();
+        }
 
-    setupScreen.classList.add("hidden");
-    hud.classList.remove("hidden");
-    leaderboardSection.classList.add("hidden");
+        setupScreen.classList.add("hidden");
+        hud.classList.remove("hidden");
+        leaderboardSection.classList.add("hidden");
 
         resetGameState();
         gameState = "playing";

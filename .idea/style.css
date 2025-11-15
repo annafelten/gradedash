@@ -1,41 +1,94 @@
-/* ----- Base layout ----- */
+/* --------------------------
+   GLOBAL LAYOUT & THEME
+--------------------------- */
 
 body {
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-    background: #0b0b10;
-    color: #f5f5f5;
+    background:
+            radial-gradient(circle at top left, #14532d 0, #020617 55%, #020617 100%);
+    color: #f9fafb;
+    min-height: 100vh;
+
+    /* MENU LAYOUT (default): UI left, world right */
     display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 24px 12px 32px;
+}
+
+/* PLAYING LAYOUT: stack UI + centered world */
+body.playing {
     flex-direction: column;
     align-items: center;
-    /* allow scrolling again */
+    gap: 12px;
 }
 
+/* Main UI block */
 #ui {
-    width: 800px;
-    margin-top: 10px;
-    text-align: center;
+    width: 100%;
+    max-width: 420px;
 }
 
-/* ----- Header ----- */
+/* In playing mode, UI can stretch a bit more, above the canvas */
+body.playing #ui {
+    max-width: 900px;
+}
+
+/* --------------------------
+   HEADER
+--------------------------- */
+
+header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 12px 16px 10px;
+    border-radius: 18px;
+    background: rgba(5, 11, 10, 0.98);
+    border: 1px solid #173827;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.65);
+    position: relative;
+}
 
 header h1 {
-    margin: 4px 0;
-    font-size: 2rem;
+    margin: 0;
+    font-size: 2.2rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fefdf9;
 }
 
 .subtitle {
     margin: 0;
     font-size: 0.9rem;
-    color: #c4c4c4;
+    color: #d1d5db;
 }
 
 .subtitle.tiny {
     font-size: 0.75rem;
+    color: #9ca3af;
 }
 
-/* ----- Inputs & buttons ----- */
+/* Cornell-ish accent underline under header */
+header::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    bottom: 4px;
+    width: 72px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(to right, #b31b1b, #f97316);
+}
+
+/* --------------------------
+   FORM FIELDS & BUTTONS
+--------------------------- */
 
 .field {
     display: flex;
@@ -47,18 +100,32 @@ header h1 {
 .field span {
     font-size: 0.9rem;
     margin-bottom: 2px;
+    color: #e5e7eb;
 }
 
 input,
 textarea {
+    box-sizing: border-box; /* Add this to fix width issues */
     width: 100%;
     padding: 6px 8px;
-    border-radius: 4px;
-    border: 1px solid #333;
-    background: #11141c;
-    color: #f5f5f5;
+    border-radius: 8px;
+    border: 1px solid #1f2937;
+    background: #020b07;
+    color: #f9fafb;
     font-family: inherit;
     font-size: 0.9rem;
+    outline: none;
+    transition:
+            border-color 0.1s ease,
+            box-shadow 0.1s ease,
+            background 0.1s ease;
+}
+
+input:focus,
+textarea:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.5);
+    background: #020817;
 }
 
 textarea {
@@ -66,22 +133,26 @@ textarea {
     resize: vertical;
 }
 
+/* Primary button */
 button {
-    padding: 8px 16px;
+    padding: 9px 18px;
     margin-top: 8px;
     border: none;
     border-radius: 999px;
-    background: #4caf50;
-    color: #fff;
+    background: #16a34a;
+    color: #f9fafb;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
+    transition:
+            transform 0.08s ease,
+            box-shadow 0.08s ease,
+            background 0.1s ease;
 }
 
 button:hover {
-    background: #43a047;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    background: #15803d;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
     transform: translateY(-1px);
 }
 
@@ -90,35 +161,100 @@ button:active {
     box-shadow: none;
 }
 
-/* ----- Mode toggle & set search ----- */
+button:disabled {
+    opacity: 0.6;
+    cursor: default;
+    box-shadow: none;
+    transform: none;
+}
 
+/* --------------------------
+   SETUP SCREEN + MODE TOGGLE
+--------------------------- */
+
+#setup-screen {
+    margin-top: 10px;
+    padding: 14px 16px 16px;
+    background: rgba(5, 11, 10, 0.97);
+    border-radius: 18px;
+    border: 1px solid #173827;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.7);
+}
+
+/* Mode toggle row */
 .mode-toggle {
     margin-top: 8px;
     display: flex;
-    gap: 16px;
+    gap: 10px;
     font-size: 0.9rem;
 }
 
+/* Turn each label into a pill-like toggle */
 .mode-toggle label {
+    flex: 1;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    background: #020b07;
+    padding: 5px 10px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    justify-content: center;
+    cursor: pointer;
+    color: #cbd5f5;
+    transition:
+            background 0.1s ease,
+            border-color 0.1s ease,
+            color 0.1s ease;
 }
+
+/* Hide default radio */
+.mode-toggle input {
+    appearance: none;
+    width: 0;
+    height: 0;
+    position: absolute;
+    opacity: 0;
+}
+
+/* For markup: <label><input ... /><span>Text</span></label> */
+.mode-toggle label span {
+    pointer-events: none;
+}
+
+/* Selected state using :has (modern browsers) */
+.mode-toggle label:has(input:checked) {
+    background: #064e3b;
+    border-color: #16a34a;
+    color: #ecfdf5;
+    font-weight: 600;
+}
+
+/* Hover */
+.mode-toggle label:hover {
+    background: #022c22;
+    border-color: #16a34a;
+}
+
+/* --------------------------
+   EXISTING SETS PANEL
+--------------------------- */
 
 #set-results {
     margin-top: 6px;
     max-height: 160px;
     overflow-y: auto;
     width: 100%;
-    border-radius: 6px;
+    border-radius: 10px;
     border: 1px solid #252a3c;
-    background: #11141c;
+    background: #020817;
 }
 
 .set-result {
     padding: 6px 8px;
     cursor: pointer;
-    border-bottom: 1px solid #252a3c;
+    border-bottom: 1px solid #111827;
+    transition: background 0.08s ease, border-color 0.08s ease;
 }
 
 .set-result:last-child {
@@ -126,113 +262,160 @@ button:active {
 }
 
 .set-result:hover {
-    background: #1e2233;
+    background: #0b1120;
 }
 
 .set-result.selected {
-    background: #2e7d32;
+    background: #064e3b;
+    border-color: #16a34a;
 }
 
 .set-title {
     font-weight: 600;
+    font-size: 0.9rem;
+    color: #e5e7eb;
 }
 
 .set-meta {
     font-size: 0.8rem;
-    color: #bbb;
+    color: #9ca3af;
 }
 
-/* ----- HUD ----- */
+/* error text */
+.error {
+    color: #ff8a80;
+}
+
+/* --------------------------
+   HUD / SCORE BAR
+--------------------------- */
 
 #hud {
-    margin-top: 8px;
+    margin-top: 10px;
     display: flex;
     justify-content: space-between;
+    gap: 8px;
     font-size: 0.95rem;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: radial-gradient(circle at left, #14532d, #020617);
+    border: 1px solid #15803d;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.75);
 }
 
 .hud-item {
     padding: 4px 10px;
-    background: #151823;
+    background: rgba(6, 18, 12, 0.95);
     border-radius: 999px;
-    border: 1px solid #252a3c;
+    border: 1px solid #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 #streak-fire {
     margin-left: 4px;
 }
 
-/* ----- Question bar ABOVE the game ----- */
+/* --------------------------
+   QUESTION BAR ABOVE CANVAS
+--------------------------- */
 
 #question-overlay {
-    width: 800px; /* match canvas width */
+    width: 100%;
+    max-width: 900px;
     margin-top: 10px;
     margin-bottom: 4px;
-
-    /* always reserve vertical space so the canvas never moves */
     height: 90px;
-    background: #000000;
-
+    background: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* hide visually but keep the height (no layout shift) */
+/* hide visually but keep height (no layout shift) */
 .question-hidden {
     visibility: hidden;
 }
 
 #question-box {
-    background: #151823;
-    border-radius: 8px;
+    background: rgba(7, 12, 10, 0.98);
+    border-radius: 16px;
     padding: 8px 10px 10px;
-    border: 1px solid #252a3c;
+    border: 1px solid #14532d;
     text-align: left;
     width: 100%;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.65);
 }
 
 #question-box h2 {
     margin: 0 0 4px;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #bbf7d0;
 }
 
 #question-text {
     font-size: 0.95rem;
-    margin: 4px 0 4px;
+    margin: 4px 0 2px;
+    color: #e5e7eb;
 }
 
 #explanation-text {
-    margin-top: 4px;
+    margin-top: 2px;
     font-size: 0.8rem;
     color: #a5d6a7;
 }
 
-/* ----- Canvas ----- */
+/* --------------------------
+   GAME CANVAS
+--------------------------- */
 
+/* Default: menu layout, canvas sits to the right */
 #game-canvas {
-    margin-top: 10px;
-    border-radius: 8px;
-    border: 2px solid #252a3c;
-    background: #14151c;
+    margin-top: 32px;
+    border-radius: 12px;
+    border: 2px solid #1d3b2a;
+    background: #0c1510;
+    display: block;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
 }
 
-/* ----- Leaderboard ----- */
+/* In playing mode, center it under the UI */
+body.playing #game-canvas {
+    margin-top: 12px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* --------------------------
+   LEADERBOARD
+--------------------------- */
 
 #leaderboard-section {
     margin-top: 16px;
     text-align: left;
+    padding: 12px 14px 14px;
+    background: rgba(5, 11, 10, 0.97);
+    border-radius: 18px;
+    border: 1px solid #173827;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.7);
 }
 
 #leaderboard-section h2 {
     margin: 0 0 4px;
     font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #bbf7d0;
 }
 
 #leaderboard-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
+    margin-top: 6px;
 }
 
 #leaderboard-table th,
@@ -242,11 +425,18 @@ button:active {
     text-align: left;
 }
 
-#leaderboard-table tr:nth-child(even) {
-    background: #151823;
+#leaderboard-table th {
+    font-weight: 600;
+    color: #e5e7eb;
 }
 
-/* ----- Overlays (for Game Over, etc.) ----- */
+#leaderboard-table tr:nth-child(even) {
+    background: #020b07;
+}
+
+/* --------------------------
+   OVERLAYS (GAME OVER)
+--------------------------- */
 
 .hidden {
     display: none !important;
@@ -269,28 +459,35 @@ button:active {
 }
 
 .overlay-box {
-    background: #151823;
-    border-radius: 12px;
+    background: #020617;
+    border-radius: 16px;
     padding: 20px 22px;
     max-width: 440px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    width: 90%;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.85);
     text-align: center;
+    border: 1px solid #b31b1b; /* Cornell accent */
 }
 
 #gameover-box h2 {
     margin: 0 0 8px;
+    font-size: 1.4rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
-
-/* Game over details */
 
 #gameover-box h3 {
     margin-top: 12px;
     margin-bottom: 4px;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 #gameover-name-display {
     font-size: 0.9rem;
     margin-bottom: 10px;
+    color: #e5e7eb;
 }
 
 .gameover-buttons {
