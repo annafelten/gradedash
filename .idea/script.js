@@ -20,7 +20,6 @@ const streakFire = document.getElementById("streak-fire");
 
 const questionOverlay = document.getElementById("question-overlay"); // only for hiding
 const explanationTextEl = document.getElementById("explanation-text");
-const continueBtn = document.getElementById("continue-btn");
 
 const gameoverOverlay = document.getElementById("gameover-overlay");
 const finalScoreEl = document.getElementById("final-score");
@@ -40,14 +39,12 @@ const PLAYER_X = 140;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 46;
 
-// Questions: more frequent
 const QUESTION_INTERVAL = 6000;      // ms between questions
-
-const BASE_SPEED_CONST = 5;
 const OBSTACLE_SPAWN_INTERVAL = 1500;
+const BASE_SPEED_CONST = 5;
 
 // -------- Game state --------
-let gameState = "menu"; // "menu" | "playing" | "gameover"
+let gameState = "menu"; // "menu" | "playing" | "gameover";
 
 let playerName = "";
 let player;
@@ -55,21 +52,20 @@ let player;
 let obstacles = [];      // red blockers
 let questionBlocks = []; // blue answer blocks
 
+let questionPrepare = false;  // paused to read question
 let questionActive = false;   // answer blocks currently moving
-let questionPrepare = false;  // pause state: show question, no movement
 let activeQuestion = null;
 
 let score = 0;
 let streak = 0;
 let bestStreak = 0;
 let baseSpeed = BASE_SPEED_CONST; // difficulty baseline
-let speed = BASE_SPEED_CONST;     // actual movement speed
+let speed = BASE_SPEED_CONST;     // current movement speed
 
 let lastSpawnTime = 0;
 let lastQuestionTime = 0;
 let lastFrameTime = performance.now();
 
-// feedback text (correct / not quite)
 let feedbackMessage = "";
 let feedbackTimer = 0; // ms remaining
 
@@ -125,7 +121,7 @@ function loadSampleQuestions() {
 // ============================
 function resetGameState() {
     player = {
-        lane: 1, // 0=top,1=middle,2=bottom
+        lane: 1,
         x: PLAYER_X,
         y: laneY[1] - PLAYER_HEIGHT / 2,
         width: PLAYER_WIDTH,
@@ -134,8 +130,8 @@ function resetGameState() {
 
     obstacles = [];
     questionBlocks = [];
-    questionActive = false;
     questionPrepare = false;
+    questionActive = false;
     activeQuestion = null;
     questionIndex = 0;
 
@@ -161,7 +157,7 @@ function resetGameState() {
 }
 
 // ============================
-// INPUT: lane switching + ENTER
+// INPUT: lanes + Enter
 // ============================
 window.addEventListener("keydown", (e) => {
     if (gameState !== "playing") return;
@@ -171,7 +167,6 @@ window.addEventListener("keydown", (e) => {
     } else if (e.code === "ArrowDown") {
         player.lane = Math.min(NUM_LANES - 1, player.lane + 1);
     } else if (e.code === "Enter") {
-        // When paused on a question, Enter spawns the moving answer blocks
         if (questionPrepare && !questionActive) {
             spawnAnswerBlocks();
         }
@@ -199,10 +194,10 @@ function gameLoop(timestamp) {
 function update(dt) {
     const now = performance.now();
 
-    // Snap player to current lane
+    // Snap player to lane
     player.y = laneY[player.lane] - player.height / 2;
 
-    // Update feedback timer
+    // Feedback timer
     if (feedbackTimer > 0) {
         feedbackTimer -= dt;
         if (feedbackTimer <= 0) {
@@ -211,17 +206,16 @@ function update(dt) {
         }
     }
 
-    // ---- PAUSE PHASE: question text visible, world frozen ----
+    // If we're in "read the question" pause: world frozen, score frozen
     if (questionPrepare) {
-        // Player can still change lanes, but nothing moves and score doesn't tick
         return;
     }
 
-    // Difficulty & speed only ramp when we're NOT paused
+    // Only ramp speed when game is actually running
     baseSpeed += dt * 0.00001;
     speed = baseSpeed;
 
-    // Spawn normal obstacles only when no question answers are active
+    // Spawn obstacles if no answers are active
     if (!questionActive && now - lastSpawnTime > OBSTACLE_SPAWN_INTERVAL) {
         spawnObstacle();
         lastSpawnTime = now;
@@ -236,7 +230,7 @@ function update(dt) {
         }
     }
 
-    // Move question blocks (answers moving toward player)
+    // Move answer blocks if active
     if (questionActive) {
         for (let i = questionBlocks.length - 1; i >= 0; i--) {
             const qb = questionBlocks[i];
@@ -245,7 +239,8 @@ function update(dt) {
                 questionBlocks.splice(i, 1);
             }
         }
-        // if all passed without collision, count as missed
+
+        // If they all pass without collision, you missed the question
         if (questionBlocks.length === 0) {
             questionActive = false;
             lastQuestionTime = now;
@@ -257,7 +252,7 @@ function update(dt) {
         }
     }
 
-    // Collision with normal obstacles → game over
+    // Collisions with normal obstacles → game over
     for (const obs of obstacles) {
         if (rectIntersect(player, obs)) {
             triggerGameOver();
@@ -265,7 +260,7 @@ function update(dt) {
         }
     }
 
-    // Collision with one of the answer blocks
+    // Collisions with answer blocks
     if (questionActive) {
         for (const qb of questionBlocks) {
             if (rectIntersect(player, qb)) {
@@ -275,12 +270,17 @@ function update(dt) {
         }
     }
 
-    // Score: ticks only while world is moving
+    // Score ticks only when world is moving
     score += dt * 0.02 * (1 + streak * 0.1);
     scoreText.textContent = Math.floor(score);
 
-    // Maybe spawn a new question (start PAUSE phase – just question text)
-    if (!questionActive && !questionPrepare && questionBank.length > 0 && now - lastQuestionTime > QUESTION_INTERVAL) {
+    // Spawn a new question → pause state (questionPrepare)
+    if (
+        !questionActive &&
+        !questionPrepare &&
+        questionBank.length > 0 &&
+        now - lastQuestionTime > QUESTION_INTERVAL
+    ) {
         startQuestionPause();
     }
 }
@@ -295,12 +295,12 @@ function draw() {
     ctx.fillStyle = "#14151c";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ----- Question box at top when a question is active or in pause -----
+    // ----- Question panel on the LEFT -----
     if ((questionActive || questionPrepare) && activeQuestion) {
-        const boxX = 40;
-        const boxY = 16;
-        const boxW = canvas.width - 80;
-        const boxH = 80;
+        const boxX = 10;
+        const boxY = 10;
+        const boxW = 260;
+        const boxH = 140;
 
         ctx.fillStyle = "#151823";
         ctx.fillRect(boxX, boxY, boxW, boxH);
@@ -315,16 +315,20 @@ function draw() {
         wrapText(
             ctx,
             activeQuestion.question,
-            boxX + 12,
-            boxY + 12,
-            boxW - 24,
+            boxX + 10,
+            boxY + 10,
+            boxW - 20,
             20
         );
 
         if (questionPrepare) {
-            ctx.font = "14px system-ui";
+            ctx.font = "13px system-ui";
             ctx.fillStyle = "#a5d6a7";
-            ctx.fillText("Press Enter when you're ready to see answer choices.", boxX + 12, boxY + boxH - 22);
+            ctx.fillText(
+                "Press Enter when you're ready for answer choices.",
+                boxX + 10,
+                boxY + boxH - 22
+            );
         }
     }
 
@@ -342,7 +346,7 @@ function draw() {
     ctx.fillStyle = "#ffc107";
     ctx.fillRect(player.x, player.y, player.width, player.height);
 
-    // A+ indicator when streak > 0
+    // A+ indicator
     if (streak > 0) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "18px system-ui";
@@ -355,7 +359,7 @@ function draw() {
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
     }
 
-    // Question answer blocks
+    // Question answer blocks – full text inside the moving blocks
     ctx.fillStyle = "#3949ab";
     ctx.font = "14px system-ui";
     ctx.textBaseline = "middle";
@@ -375,7 +379,7 @@ function draw() {
     ctx.font = "16px system-ui";
     if (gameState === "playing") {
         ctx.fillText(
-            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into an answer to choose it.",
+            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into an answer block to pick it.",
             12,
             canvas.height - 18
         );
@@ -391,11 +395,13 @@ function draw() {
     if (feedbackTimer > 0 && feedbackMessage) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "16px system-ui";
-        ctx.fillText(feedbackMessage, 12, 110);
+        ctx.fillText(feedbackMessage, 12, 170);
     }
 }
 
-// Helper to wrap text in blocks/box
+// ============================
+// TEXT WRAP HELPER
+// ============================
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     const words = text.split(" ");
     let line = "";
@@ -444,10 +450,8 @@ function rectIntersect(a, b) {
 }
 
 // ----------------------------
-// Question flow
+// QUESTION FLOW
 // ----------------------------
-
-// Start the pause phase: show question text, freeze world
 function startQuestionPause() {
     if (questionBank.length === 0 || questionActive || questionPrepare) return;
 
@@ -461,7 +465,6 @@ function startQuestionPause() {
     if (explanationTextEl) explanationTextEl.textContent = "";
 }
 
-// Spawn the moving answer blocks after Enter is pressed
 function spawnAnswerBlocks() {
     if (!activeQuestion || questionActive) return;
 
@@ -469,6 +472,7 @@ function spawnAnswerBlocks() {
     questionActive = true;
     questionBlocks = [];
 
+    // Up to 3 options → 3 lanes
     const optionIndices = [];
     for (let i = 0; i < Math.min(3, activeQuestion.options.length); i++) {
         optionIndices.push(i);
@@ -497,7 +501,6 @@ function spawnAnswerBlocks() {
     });
 }
 
-// Called when player collides with an answer block
 function handleLaneAnswer(block) {
     if (!activeQuestion) return;
 
@@ -510,15 +513,14 @@ function handleLaneAnswer(block) {
     if (isCorrect) {
         streak++;
         bestStreak = Math.max(bestStreak, streak);
-        streakText.textContent = streak.toString();
+        streakText.textContent = String(streak);
         if (streak >= 3) streakFire.classList.remove("hidden");
 
-        // Speed up based on correct answers
         const speedBoost = 0.6 + 0.15 * Math.min(streak, 5);
         baseSpeed += speedBoost;
 
         score += 90 * (1 + streak * 0.3);
-        scoreText.textContent = Math.floor(score).toString();
+        scoreText.textContent = String(Math.floor(score));
 
         feedbackMessage = "Correct! " + activeQuestion.explanation;
         feedbackTimer = 4000;
@@ -549,7 +551,6 @@ function triggerGameOver() {
     gameoverOverlay.classList.remove("overlay-hidden");
 }
 
-// Restart
 restartBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");
     resetGameState();
@@ -557,7 +558,6 @@ restartBtn.addEventListener("click", () => {
     lastFrameTime = performance.now();
 });
 
-// Back to menu
 backMenuBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");
     hud.classList.add("hidden");
@@ -566,7 +566,7 @@ backMenuBtn.addEventListener("click", () => {
 });
 
 // ============================
-// LEADERBOARD (LOCAL STORAGE)
+// LEADERBOARD
 // ============================
 const LEADERBOARD_KEY = "gradedash_leaderboard";
 
@@ -616,7 +616,7 @@ submitScoreBtn.addEventListener("click", () => {
 });
 
 // ============================
-// START GAME BUTTON
+// START GAME
 // ============================
 startBtn.addEventListener("click", () => {
     const nameVal = playerNameInput.value.trim();
@@ -627,7 +627,6 @@ startBtn.addEventListener("click", () => {
     playerName = nameVal;
     playerNameLabel.textContent = playerName;
 
-    // Later: use notesInput.value → Claude → questionBank.
     loadSampleQuestions();
 
     setupScreen.classList.add("hidden");
@@ -638,7 +637,7 @@ startBtn.addEventListener("click", () => {
 });
 
 // ============================
-// INITIALIZE
+// INIT
 // ============================
 renderLeaderboard();
 resetGameState();
