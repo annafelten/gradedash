@@ -8,7 +8,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow: hidden; /* prevent page scrolling */
+    overflow-x: hidden;  /* keep from scrolling sideways */
+    overflow-y: auto;    /* allow vertical scrolling */
 }
 
 #ui {

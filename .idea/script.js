@@ -1,5 +1,5 @@
 // ============================
-// GRADEDASH – 3-LANE GAME LOOP
+// GRADEDASH – 4-LANE GAME LOOP
 // ============================
 
 // Canvas & context
@@ -31,16 +31,15 @@ const gameoverNameDisplay = document.getElementById("gameover-name-display");
 const restartBtn = document.getElementById("restart-btn");
 const backMenuBtn = document.getElementById("back-menu-btn");
 const submitScoreBtn = document.getElementById("submit-score-btn");
-
 const gameoverFeedback = document.getElementById("gameover-feedback");
 
-// Leaderboard elements
+// leaderboard section so we can hide it while playing
+const leaderboardSection = document.getElementById("leaderboard-section");
 const leaderboardBody = document.getElementById("leaderboard-body");
 
 // -------- Game constants --------
 const NUM_LANES = 4;
-// Spread 4 lanes evenly
-const laneY = [90, 170, 250, 330];
+const laneY = [90, 170, 250, 330]; // vertical centers for 4 lanes
 const PLAYER_X = 140;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 46;
@@ -56,7 +55,7 @@ let playerName = "";
 let player;
 
 let obstacles = [];      // red blockers
-let questionBlocks = []; // blue answer blocks
+let questionBlocks = []; // moving answer blocks
 
 let questionPrepare = false;  // paused to read question
 let questionActive = false;   // answer blocks currently moving
@@ -78,7 +77,7 @@ let feedbackTimer = 0; // ms remaining
 // Questions
 let questionBank = [];
 let questionIndex = 0;
-let questionNumber = 1;
+let questionNumber = 1; // you can change/remove this if you don't want a limit
 
 // ============================
 // SAMPLE QUESTIONS
@@ -329,20 +328,15 @@ function draw() {
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
     }
 
-    // Moving answer blocks in lanes
-    ctx.textBaseline = "middle";
+    // Moving answer blocks in lanes — full answer text “in line” with the game
+    ctx.textBaseline = "top";
     for (const qb of questionBlocks) {
         ctx.fillStyle = "#3949ab";
         ctx.fillRect(qb.x, qb.y, qb.width, qb.height);
 
-        // Letter label (A, B, C) inside block
         ctx.fillStyle = "#ffffff";
-        ctx.font = "22px system-ui";
-        const label = qb.label || "";
-        const metrics = ctx.measureText(label);
-        const textX = qb.x + (qb.width - metrics.width) / 2;
-        const textY = qb.y + qb.height / 2;
-        ctx.fillText(label, textX, textY);
+        ctx.font = "14px system-ui";
+        wrapText(ctx, qb.text, qb.x + 6, qb.y + 6, qb.width - 12, 16);
     }
 
     // Instructions
@@ -350,7 +344,7 @@ function draw() {
     ctx.font = "16px system-ui";
     if (gameState === "playing") {
         ctx.fillText(
-            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into a letter block (A/B/C) to choose your answer.",
+            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into the block with the correct answer.",
             12,
             canvas.height - 18
         );
@@ -369,7 +363,6 @@ function draw() {
         ctx.fillText(feedbackMessage, 12, 40);
     }
 }
-
 
 // ============================
 // TEXT WRAP HELPER
@@ -434,43 +427,31 @@ function startQuestionPause() {
     questionActive = false;
     questionBlocks = [];
 
-    // Show question bar
-    // Show question bar (but it uses reserved space, so no layout shift)
+    // Show question bar (uses reserved space so canvas doesn't move)
     if (questionOverlay) {
         questionOverlay.classList.remove("question-hidden");
     }
 
-
-    // Slight random horizontal shift so it "moves" each time,
-    // but stays within the 800px width and never off-screen.
+    // Small random horizontal shift so it feels dynamic
     if (questionBoxEl) {
         const offsets = [-40, -20, 0, 20, 40];
         const dx = offsets[Math.floor(Math.random() * offsets.length)];
         questionBoxEl.style.transform = `translateX(${dx}px)`;
     }
 
-    // Question text
+    // Question text only (no answer choices here)
     if (questionTextEl) {
         questionTextEl.textContent = activeQuestion.question;
     }
 
-    // Show up to 4 options in the bar as static white boxes
+    // Clear answer container so no choices show in the bar
     if (answersContainer) {
         answersContainer.innerHTML = "";
-        const count = Math.min(4, activeQuestion.options.length);
-        for (let idx = 0; idx < count; idx++) {
-            const opt = activeQuestion.options[idx];
-            const div = document.createElement("div");
-            div.className = "answer-static";
-            const label = String.fromCharCode(65 + idx); // A,B,C,D
-            div.textContent = `${label}. ${opt}`;
-            answersContainer.appendChild(div);
-        }
     }
 
     if (explanationTextEl) {
         explanationTextEl.textContent =
-            "Press Enter when you're ready. A/B/C/D blocks will spawn in the lanes.";
+            "Press Enter when you're ready. Answer choices will appear in the lanes.";
     }
 }
 
@@ -494,11 +475,9 @@ function spawnAnswerBlocks() {
 
     optionIndices.forEach((optIdx, i) => {
         const lane = laneOrder[i];
-        const width = 120;
-        const height = 60;
+        const width = 160;
+        const height = 64;
         const y = laneY[lane] - height / 2;
-
-        const label = String.fromCharCode(65 + optIdx); // A,B,C,D
 
         questionBlocks.push({
             lane,
@@ -507,13 +486,13 @@ function spawnAnswerBlocks() {
             width,
             height,
             answerIndex: optIdx,
-            label
+            text: activeQuestion.options[optIdx]
         });
     });
 
     if (explanationTextEl) {
         explanationTextEl.textContent =
-            "Dodge into the lane for A, B, C, or D to choose your answer!";
+            "Dodge into the lane with the correct answer.";
     }
 }
 
@@ -556,12 +535,12 @@ function handleLaneAnswer(block) {
             explanationTextEl.textContent = "Not quite. " + activeQuestion.explanation;
         }
     }
-    if(questionIndex >= questionNumber){
+
+    if (questionIndex >= questionNumber) {
         gameoverFeedback.textContent = "You've answered all questions.";
         triggerGameOver();
     }
 }
-
 
 // ============================
 // GAME OVER
@@ -582,14 +561,24 @@ function triggerGameOver() {
     finalStreakEl.textContent = bestStreak;
     gameoverNameDisplay.textContent = `Player: ${playerName || "Unknown"}`;
     gameoverOverlay.classList.remove("overlay-hidden");
+
+    // show leaderboard again when not running
+    if (leaderboardSection) {
+        leaderboardSection.classList.remove("hidden");
+    }
 }
 
-
+// buttons
 restartBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");
     resetGameState();
     gameState = "playing";
     lastFrameTime = performance.now();
+
+    // hide leaderboard while we play again
+    if (leaderboardSection) {
+        leaderboardSection.classList.add("hidden");
+    }
 });
 
 backMenuBtn.addEventListener("click", () => {
@@ -597,6 +586,11 @@ backMenuBtn.addEventListener("click", () => {
     hud.classList.add("hidden");
     setupScreen.classList.remove("hidden");
     gameState = "menu";
+
+    // show leaderboard on menu
+    if (leaderboardSection) {
+        leaderboardSection.classList.remove("hidden");
+    }
 });
 
 // ============================
@@ -668,6 +662,11 @@ startBtn.addEventListener("click", () => {
     resetGameState();
     gameState = "playing";
     lastFrameTime = performance.now();
+
+    // hide leaderboard while game is running
+    if (leaderboardSection) {
+        leaderboardSection.classList.add("hidden");
+    }
 });
 
 // ============================
