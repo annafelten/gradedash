@@ -35,6 +35,7 @@ const submitScoreBtn = document.getElementById("submit-score-btn");
 const gameoverFeedback = document.getElementById("gameover-feedback");
 
 // Leaderboard elements
+const leaderboardSection = document.getElementById("leaderboard-section");
 const leaderboardBody = document.getElementById("leaderboard-body");
 
 // -------- Game constants --------
@@ -596,6 +597,7 @@ backMenuBtn.addEventListener("click", () => {
     gameoverOverlay.classList.add("overlay-hidden");
     hud.classList.add("hidden");
     setupScreen.classList.remove("hidden");
+    leaderboardSection.classList.remove("hidden");
     gameState = "menu";
 });
 
@@ -668,6 +670,8 @@ startBtn.addEventListener("click", () => {
     resetGameState();
     gameState = "playing";
     lastFrameTime = performance.now();
+
+    leaderboardSection.classList.add("hidden");
 });
 
 // ============================
