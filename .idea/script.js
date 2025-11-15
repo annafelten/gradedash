@@ -275,6 +275,36 @@ function draw() {
     ctx.fillStyle = "#14151c";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // ----- Question box at top when a question is active -----
+    if (questionActive && activeQuestion) {
+        const boxX = 40;
+        const boxY = 20;
+        const boxW = canvas.width - 80;
+        const boxH = 60;
+
+        // Box background
+        ctx.fillStyle = "#151823";
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+
+        // Box border
+        ctx.strokeStyle = "#4caf50";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        // Question text
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "14px system-ui";
+        ctx.textBaseline = "top";
+        wrapText(
+            ctx,
+            activeQuestion.question,
+            boxX + 10,
+            boxY + 10,
+            boxW - 20,
+            16
+        );
+    }
+
     // Lanes
     for (let i = 0; i < NUM_LANES; i++) {
         ctx.strokeStyle = "#252a3c";
@@ -321,16 +351,24 @@ function draw() {
     ctx.fillStyle = "#ffffffaa";
     ctx.font = "14px system-ui";
     if (gameState === "playing") {
-        ctx.fillText("Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into an answer to choose it.", 12, 20);
+        ctx.fillText(
+            "Use ↑ / ↓ to switch lanes. Avoid red blocks. Run into an answer to choose it.",
+            12,
+            canvas.height - 20
+        );
     } else if (gameState === "menu") {
-        ctx.fillText("Enter your name and click Start Game to begin.", 12, 20);
+        ctx.fillText(
+            "Enter your name and click Start Game to begin.",
+            12,
+            canvas.height - 20
+        );
     }
 
-    // Feedback text
+    // Feedback text (e.g., “Correct!” / explanation)
     if (feedbackTimer > 0 && feedbackMessage) {
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#ffffff";
         ctx.font = "14px system-ui";
-        ctx.fillText(feedbackMessage, 12, 40);
+        ctx.fillText(feedbackMessage, 12, 90);
     }
 }
 
