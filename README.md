@@ -57,6 +57,12 @@ We integrated AI at the core of our platform to make the learning experience tru
 
 Additionally, we leveraged Claude to assist us in coding, helping streamline development and implement features more efficiently. By combining AI-driven content generation, personalization, and verification, we ensure that every user gets a fun, engaging, and trustworthy learning experience.
 
+## Challenges:
+1) We needed the user to upload PDFs or text, send the content to the AI API, and convert the output into clean, structured question objects. Handling PDFs, formatting issues, and inconsistent AI output made this surprisingly complex.
+- We designed a preprocessing pipeline that extracts text from uploaded files, cleans unwanted characters, and sends the cleaned text to the API with a strict format instruction (JSON only). We then validate the JSON before adding questions to the game.
+
+2) 
+
 ## Tech stack:
 Frontend: JavaScript, HTML, CSS
 Backend: Node.js
