@@ -2,52 +2,54 @@
 
 
 body {
-   margin: 0;
-   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-   background: #0b0b10;
-   color: #f5f5f5;
-   display: flex;
-   flex-direction: column;
-   align-items: center;
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0b0b10;
+    color: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
 }
 
 
 #ui {
-   width: 800px;
-   margin-top: 10px;
-   text-align: center;
+    width: 800px;
+    margin-top: 10px;
+    text-align: center;
+    position: relative;
 }
 
 
 header h1 {
-   margin: 4px 0;
-   font-size: 2rem;
+    margin: 4px 0;
+    font-size: 2rem;
 }
 
 
 .subtitle {
-   margin: 0;
-   font-size: 0.9rem;
-   color: #c4c4c4;
+    margin: 0;
+    font-size: 0.9rem;
+    color: #c4c4c4;
 }
 
 
 .subtitle.tiny {
-   font-size: 0.75rem;
+    font-size: 0.75rem;
 }
 
 
 .field {
-   display: flex;
-   flex-direction: column;
-   align-items: flex-start;
-   margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 8px 0;
 }
 
 
 .field span {
-   font-size: 0.9rem;
-   margin-bottom: 2px;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
 }
 
 
@@ -56,45 +58,45 @@ header h1 {
 
 input,
 textarea {
-   width: 100%;
-   padding: 6px 8px;
-   border-radius: 4px;
-   border: 1px solid #333;
-   background: #11141c;
-   color: #f5f5f5;
-   font-family: inherit;
-   font-size: 0.9rem;
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    background: #11141c;
+    color: #f5f5f5;
+    font-family: inherit;
+    font-size: 0.9rem;
 }
 
 textarea {
-   height: 80px;
-   resize: vertical;
+    height: 80px;
+    resize: vertical;
 }
 
 button {
-   padding: 8px 16px;
-   margin-top: 8px;
-   border: none;
-   border-radius: 999px;
-   background: #4caf50;
-   color: #fff;
-   font-weight: 600;
-   font-size: 0.9rem;
-   cursor: pointer;
-   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
+    padding: 8px 16px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 999px;
+    background: #4caf50;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
 }
 
 
 button:hover {
-   background: #43a047;
-   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-   transform: translateY(-1px);
+    background: #43a047;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
 }
 
 
 button:active {
-   transform: translateY(0);
-   box-shadow: none;
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 
@@ -102,23 +104,23 @@ button:active {
 
 
 #hud {
-   margin-top: 8px;
-   display: flex;
-   justify-content: space-between;
-   font-size: 0.95rem;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
 }
 
 
 .hud-item {
-   padding: 4px 10px;
-   background: #151823;
-   border-radius: 999px;
-   border: 1px solid #252a3c;
+    padding: 4px 10px;
+    background: #151823;
+    border-radius: 999px;
+    border: 1px solid #252a3c;
 }
 
 
 #streak-fire {
-   margin-left: 4px;
+    margin-left: 4px;
 }
 
 
@@ -126,11 +128,18 @@ button:active {
 
 
 #game-canvas {
+<<<<<<< HEAD
    position: relative;
    margin-top: 10px;
    border-radius: 8px;
    border: 2px solid #252a3c;
    background: #14151c;
+=======
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 2px solid #252a3c;
+    background: #14151c;
+>>>>>>> ff3e7affccd7229a7c3ee15647c41013b6b4ad4d
 }
 
 
@@ -138,34 +147,34 @@ button:active {
 
 
 #leaderboard-section {
-   margin-top: 16px;
-   text-align: left;
+    margin-top: 16px;
+    text-align: left;
 }
 
 
 #leaderboard-section h2 {
-   margin: 0 0 4px;
-   font-size: 1.1rem;
+    margin: 0 0 4px;
+    font-size: 1.1rem;
 }
 
 
 #leaderboard-table {
-   width: 100%;
-   border-collapse: collapse;
-   font-size: 0.85rem;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
 }
 
 
 #leaderboard-table th,
 #leaderboard-table td {
-   padding: 4px 6px;
-   border-bottom: 1px solid #252a3c;
-   text-align: left;
+    padding: 4px 6px;
+    border-bottom: 1px solid #252a3c;
+    text-align: left;
 }
 
 
 #leaderboard-table tr:nth-child(even) {
-   background: #151823;
+    background: #151823;
 }
 
 
@@ -173,11 +182,12 @@ button:active {
 
 
 .hidden {
-   display: none;
+    display: none;
 }
 
 
 .overlay {
+<<<<<<< HEAD
    position: fixed;
    inset: 0;
    background: rgba(0, 0, 0, 0.7);
@@ -185,6 +195,15 @@ button:active {
    align-items: center;
    justify-content: center;
    z-index: 1000;
+=======
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+>>>>>>> ff3e7affccd7229a7c3ee15647c41013b6b4ad4d
 }
 
 .overlay-hidden {
@@ -193,55 +212,96 @@ button:active {
 
 
 .overlay-box {
-   background: #151823;
-   border-radius: 12px;
-   padding: 20px 22px;
-   max-width: 440px;
-   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-   text-align: center;
+    background: #151823;
+    border-radius: 12px;
+    padding: 20px 22px;
+    max-width: 440px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    text-align: center;
 }
 
 
 #question-box h2,
 #gameover-box h2 {
-   margin: 0 0 8px;
+    margin: 0 0 8px;
 }
 
 
+/* ----- Question bar ABOVE the game ----- */
+
+/* ----- Question bar pinned over the UI ----- */
+
+#question-overlay {
+    position: absolute;
+    top: 190px;              /* tweak this to sit where you want */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;            /* match canvas width */
+    margin: 0;               /* no margins, we’re positioning it */
+    z-index: 5;
+}
+
+#question-box {
+    background: #151823;
+    border-radius: 8px;
+    padding: 8px 10px 10px;
+    border: 1px solid #252a3c;
+    text-align: left;
+}
+
+
+#question-box h2 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+}
+
+#question-text {
+    font-size: 0.95rem;
+    margin: 4px 0 6px;
+}
+
+/* Container for answer options in the bar */
 #answers-container {
-   margin-top: 8px;
-   display: flex;
-   flex-direction: column;
-   gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
 }
 
+/* Static answer boxes: white background, black text */
+.answer-static {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #cccccc;
+    font-size: 0.85rem;
+}
 
-.answer-btn {
-   width: 100%;
-   text-align: left;
-   padding: 6px 10px;
-   border-radius: 6px;
-   background: #22263a;
-   border: 1px solid #333a59;
+/* Explanation / hint line under the answers */
+#explanation-text {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: #a5d6a7;
 }
 
 
 .answer-btn.correct {
-   background: #2e7d32;
-   border-color: #66bb6a;
+    background: #2e7d32;
+    border-color: #66bb6a;
 }
 
 
 .answer-btn.wrong {
-   background: #c62828;
-   border-color: #ef5350;
+    background: #c62828;
+    border-color: #ef5350;
 }
 
 
 #explanation-text {
-   margin-top: 8px;
-   font-size: 0.85rem;
-   color: #e0e0e0;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #e0e0e0;
 }
 
 
@@ -249,27 +309,27 @@ button:active {
 
 
 #gameover-box h3 {
-   margin-top: 12px;
-   margin-bottom: 4px;
+    margin-top: 12px;
+    margin-bottom: 4px;
 }
 
 
 #gameover-name-display {
-   font-size: 0.9rem;
-   margin-bottom: 10px;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
 }
 
 
 .gameover-buttons {
-   display: flex;
-   justify-content: center;
-   gap: 8px;
-   margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 /* Small note text */
 
 small {
-   font-size: 0.75rem;
-   color: #999;
+    font-size: 0.75rem;
+    color: #999;
 }
