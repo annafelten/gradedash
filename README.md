@@ -1,5 +1,5 @@
 
-![gradedash](https://github.coecis.cornell.edu/user-attachments/assets/11da56ce-19b7-402c-85f8-28ec494c9003)
+<img width="1536" height="1024" alt="gradedash" src="https://github.com/user-attachments/assets/c1a65361-543c-4c60-874e-88f3e8995a07" />
 
 # GradeDash 📗
 
@@ -22,7 +22,7 @@ The game structure ensures that students remain focused, preventing attention fr
 
 Our goal is to make learning feel less like a chore and more like a challenge that’s fun, interactive, and rewarding. By blending AI customization with gamification, we create a space where students genuinely enjoy testing their knowledge, retain information more effectively, and build confidence in their abilities—all while having fun and staying engaged.
 
-### Key Features<img width="1308" alt="gradeddash" src="https://github.coecis.cornell.edu/user-attachments/assets/34b2c4a3-2f01-455c-beb1-2beb9f4b6d3c" />
+<img width="1308" height="639" alt="gradeddash" src="https://github.com/user-attachments/assets/07a1faf0-252a-4dfa-ba26-861581b10707" />
 
 - **AI-Generated Questions**
   - Students choose the topic (e.g., “Linear Algebra Prelim 2,” “Biology Unit 3,” etc.).
