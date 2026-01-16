@@ -3,6 +3,8 @@
 
 # GradeDash 📗
 
+Hackathon Page: https://devpost.com/software/gradedash
+
 ## Project Overview
 GradeDash is an AI-powered tool designed to help students become more resilient in their educational endevours. Our solution leverages Claude’s advanced AI capabilities to provide an interactive, adaptive, and gamified learning experience which can be catered to each student’s specific needs.
 
